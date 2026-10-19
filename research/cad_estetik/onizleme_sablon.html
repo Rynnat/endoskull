@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bust CAD Önizleme</title>
+<style>
+  :root { --bg: #0b0d12; --panel: rgba(18,21,29,.92); --line: #2a3040; --txt: #e6e9ef; --dim: #8b93a5; --cyan: #4fd1ff; --red: #ff3b2a; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--txt); font: 13px/1.45 "Segoe UI", system-ui, sans-serif; overflow: hidden; }
+  canvas { display: block; width: 100%; height: 100%; }
+  #ui { position: fixed; left: 12px; top: 12px; width: 300px; max-height: calc(100% - 24px); overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; box-sizing: border-box; }
+  h1 { margin: 0 0 2px; font-size: 15px; letter-spacing: .12em; color: var(--cyan); }
+  .warn { color: var(--red); font-size: 11px; margin: 4px 0 10px; }
+  .grp { color: var(--dim); font-size: 11px; letter-spacing: .1em; margin: 10px 0 5px; }
+  label { display: flex; align-items: center; gap: 6px; font-size: 12px; margin: 2px 0; cursor: pointer; }
+  label i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  input[type=range] { width: 100%; accent-color: var(--cyan); }
+  button { background: #161a23; color: var(--txt); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; font: inherit; font-size: 12px; cursor: pointer; }
+  #hover { position: fixed; right: 12px; bottom: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font: 12px Consolas, monospace; color: var(--cyan); }
+  @media (max-width: 600px) { #ui { left: 16px; right: 16px; width: auto; max-height: 45%; } }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="ui">
+  <h1>BUST · CAD ÖNİZLEME</h1>
+  <div class="warn" id="sonuc"></div>
+  <div style="font-size:11px;color:var(--dim)">CP3b-1 · torktan bağımsız parçalar, nötr poz · mavi yarı saydam = CP3b-2 yer tutucu (boyun/eğme/yay/piston) · birim mm</div>
+  <div class="grp">GRUPLAR</div>
+  <div id="groups"></div>
+  <div class="grp">PATLATMA</div>
+  <input id="ex" type="range" min="0" max="100" value="0">
+  <div class="grp">GÖRÜNÜM</div>
+  <button id="spin">Döndür</button> <button id="fit">Çerçevele</button>
+</div>
+<div id="hover">parçanın üstüne gel</div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+const DATA = /*DATA*/null;
+const GN = { kabuk: "Kafatası kabuğu (B2, B3)", sasi: "Şasi (B1, B6, C1)", cene: "Alt çene (B4)", goz: "Göz modülü (B5)", govde: "Göğüs + kaide (G)", satin: "Satın alınan (servo, kart, hoparlör)", rezerv: "CP3b-2 yer tutucu", diger: "Diğer" };
+const canvas = document.getElementById("c");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0b0d12);
+const cam = new THREE.PerspectiveCamera(32, 1, 1, 10000);
+const controls = new THREE.OrbitControls(cam, canvas); controls.enableDamping = true;
+scene.add(new THREE.HemisphereLight(0xdfe8ff, 0x15171d, 0.7));
+const sun = new THREE.DirectionalLight(0xffffff, 0.95); sun.position.set(300, 500, 400); scene.add(sun);
+const rim = new THREE.DirectionalLight(0x4fd1ff, 0.4); rim.position.set(-400, 200, -300); scene.add(rim);
+
+const b64 = (s, T) => { const bin = atob(s), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new T(u.buffer); };
+const meshes = DATA.parts.map(p => {
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(b64(p.v, Float32Array), 3));
+  geo.setIndex(new THREE.BufferAttribute(b64(p.f, Uint32Array), 1));
+  geo.computeVertexNormals(); geo.computeBoundingBox();
+  const rez = p.k === "rezerv", sat = p.k === "satin";
+  const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(p.c[0] / 255, p.c[1] / 255, p.c[2] / 255), flatShading: true,
+    metalness: rez ? 0 : sat ? 0.3 : 0.55, roughness: rez ? 0.6 : sat ? 0.5 : 0.38, transparent: rez, opacity: rez ? 0.22 : 1, depthWrite: !rez });
+  const m = new THREE.Mesh(geo, mat); m.userData = p; scene.add(m);
+  m.userData.c0 = geo.boundingBox.getCenter(new THREE.Vector3());
+  return m;
+});
+// patlatma: bas ve govde icin ayri merkezler
+const center = sel => { const v = new THREE.Vector3(); let n = 0; meshes.forEach(m => { if (sel(m)) { v.add(m.userData.c0); n++; } }); return v.multiplyScalar(1 / Math.max(1, n)); };
+const isG = m => m.userData.g === "govde" || /lazy|yaw|hoparlor|kart_/.test(m.userData.n);
+const cHead = center(m => !isG(m) && m.userData.k !== "rezerv"), cBody = center(isG);
+meshes.forEach(m => { const c = isG(m) ? cBody : cHead; m.userData.dir = m.userData.c0.clone().sub(c); });
+document.getElementById("ex").oninput = e => { const u = e.target.value / 100; meshes.forEach(m => m.position.copy(m.userData.dir).multiplyScalar(u * 0.9)); };
+
+const groups = [...new Set(DATA.parts.map(p => p.g))];
+groups.forEach(g => {
+  const p = DATA.parts.find(q => q.g === g), l = document.createElement("label");
+  l.innerHTML = `<input type="checkbox" checked><i style="background:rgb(${p.c})"></i>${GN[g] || g} <span style="color:var(--dim)">(${DATA.parts.filter(q => q.g === g).length})</span>`;
+  l.querySelector("input").onchange = e => meshes.forEach(m => { if (m.userData.g === g) m.visible = e.target.checked; });
+  document.getElementById("groups").appendChild(l);
+});
+document.getElementById("sonuc").textContent = "⚠ KONTROLLER TEMİZ DEĞİL · " + DATA.sonuc.trim() + " · baskıya gönderme";
+
+function fit() {
+  const box = new THREE.Box3(); meshes.forEach(m => { if (m.visible) box.expandByObject(m); });
+  const c = box.getCenter(new THREE.Vector3()), r = box.getSize(new THREE.Vector3()).length() * 0.5;
+  controls.target.copy(c); cam.position.set(c.x + r * 1.2, c.y + r * 0.35, c.z + r * 2.0); cam.near = r / 100; cam.far = r * 20; cam.updateProjectionMatrix();
+}
+document.getElementById("fit").onclick = fit;
+document.getElementById("spin").onclick = e => { controls.autoRotate = !controls.autoRotate; e.target.style.borderColor = controls.autoRotate ? "#4fd1ff" : ""; };
+
+const ray = new THREE.Raycaster(), mp = new THREE.Vector2();
+canvas.addEventListener("pointermove", e => {
+  mp.set(e.clientX / innerWidth * 2 - 1, -e.clientY / innerHeight * 2 + 1); ray.setFromCamera(mp, cam);
+  const h = ray.intersectObjects(meshes.filter(m => m.visible && m.userData.k !== "rezerv"))[0];
+  document.getElementById("hover").textContent = h ? `${h.object.userData.n} · ${GN[h.object.userData.g] || ""}` : "parçanın üstüne gel";
+});
+function resize() { const w = canvas.clientWidth, h = canvas.clientHeight; if (canvas.width !== Math.floor(w * renderer.getPixelRatio())) { renderer.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); } }
+function loop() { resize(); controls.update(); renderer.render(scene, cam); requestAnimationFrame(loop); }
+resize(); fit(); loop();
+</script>
+</body>
+</html>

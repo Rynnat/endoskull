@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project Bust — konsept v0</title>
+<style>
+  :root { --bg: #07080b; --panel: rgba(14,16,22,.86); --line: #2a2f3a; --txt: #d7dbe3; --dim: #7d8594; --red: #ff3b2a; --cyan: #34e6ff; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: radial-gradient(ellipse at 50% 30%, #1a1d26 0%, var(--bg) 70%); color: var(--txt); font: 13px/1.4 "Segoe UI", system-ui, sans-serif; overflow: hidden; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+  #ui { position: fixed; top: 12px; left: 12px; width: 270px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; backdrop-filter: blur(6px); }
+  h1 { margin: 0 0 2px; font-size: 15px; letter-spacing: .14em; color: var(--red); }
+  .sub { color: var(--dim); font-size: 11px; margin-bottom: 10px; }
+  .grp { margin: 10px 0 4px; font-size: 10px; letter-spacing: .12em; color: var(--dim); }
+  .row { display: flex; flex-wrap: wrap; gap: 5px; }
+  button { background: #161a23; color: var(--txt); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; font: inherit; font-size: 12px; cursor: pointer; }
+  button:hover { border-color: #4a5262; }
+  button.on { border-color: var(--red); color: #fff; box-shadow: 0 0 0 1px var(--red) inset; }
+  #read { margin-top: 10px; font: 11px/1.55 Consolas, monospace; color: var(--dim); white-space: pre; }
+  #read b { color: var(--txt); font-weight: normal; }
+  #note { position: fixed; right: 12px; bottom: 12px; max-width: 330px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 11px; color: var(--dim); }
+  #note b { color: var(--cyan); font-weight: normal; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="ui">
+  <h1>PROJECT BUST</h1>
+  <div class="sub">v4 · boyun pistonları ramus arkasında · kaba konsept, CAD değil</div>
+  <div class="grp">KONTROL</div>
+  <div class="row">
+    <button id="mMouse" class="on">Fareyi izle</button>
+    <button id="mAuto">Otonom</button>
+  </div>
+  <div class="grp">İFADE</div>
+  <div class="row">
+    <button data-ex="notr" class="on">Nötr</button>
+    <button data-ex="merak">Merak</button>
+    <button data-ex="supheli">Şüpheli</button>
+    <button data-ex="tehdit">Tehdit</button>
+    <button id="wink">Göz kırp</button>
+    <button id="talk">Konuş</button>
+  </div>
+  <div class="grp">GÖRÜNÜM</div>
+  <div class="row">
+    <button id="shell">Kabuğu gizle</button>
+    <button id="mass">Kütle / pivot</button>
+    <button id="spin">Döndür</button>
+  </div>
+  <div id="read"></div>
+</div>
+<div id="note">
+  <b>S1 + H2:</b> boyun = döner tabla (yaw) + 2× MG996R pistonla diferansiyel eğme/yatırma · çene MG996R pivotun arkasında, yanak pistonu · 5× SG90 göz + sağ/sol deklanşör kapak · denge yayı · göğüs kafesinin üst kısmı (sabit, kaideli).<br>
+  Sakkad süresi 2.2·A+21 ms · kırpma 80 ms kapanır / 200 ms açılır · bakış &gt;20° ise baş devreye girer, göz VOR ile telafi eder.<br>
+  Çene–boyun boşluğu her karede ölçülür; &lt;5 mm olursa eğme kilitlenir (firmware kuralı).<br>
+  Sürükle: döndür · tekerlek: yakınlaş
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+// birim: cm. y yukari, +z robotun onu (bize bakar), +x ekranda sag.
+const canvas = document.getElementById("c");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(32, 1, 1, 500);
+cam.position.set(34, 16, 80);
+const controls = new THREE.OrbitControls(cam, canvas);
+controls.target.set(0, 8, 0);
+controls.enableDamping = true;
+controls.minDistance = 18; controls.maxDistance = 140;
+
+// --- ortam yansimasi (metal icin): kanvasa cizilmis equirect studyo ---------------
+{
+  const cv = document.createElement("canvas"); cv.width = 1024; cv.height = 512;
+  const g = cv.getContext("2d");
+  const gr = g.createLinearGradient(0, 0, 0, 512);
+  gr.addColorStop(0, "#c9d0dc"); gr.addColorStop(0.45, "#5a606c"); gr.addColorStop(0.55, "#1a1c22"); gr.addColorStop(1, "#050506");
+  g.fillStyle = gr; g.fillRect(0, 0, 1024, 512);
+  const blob = (x, y, rx, ry, c) => { const r = g.createRadialGradient(x, y, 0, x, y, rx); r.addColorStop(0, c); r.addColorStop(1, "rgba(0,0,0,0)"); g.save(); g.scale(1, ry / rx); g.fillStyle = r; g.beginPath(); g.arc(x, y * rx / ry, rx, 0, 7); g.fill(); g.restore(); };
+  blob(512, 70, 180, 60, "rgba(255,255,255,1)");      // tepe softbox
+  blob(250, 200, 90, 70, "rgba(255,255,255,.9)");     // anahtar isik
+  blob(820, 220, 110, 60, "rgba(255,70,50,.9)");      // kirmizi kontur
+  blob(80, 230, 70, 50, "rgba(90,200,255,.6)");
+  const tex = new THREE.CanvasTexture(cv);
+  tex.mapping = THREE.EquirectangularReflectionMapping; tex.encoding = THREE.sRGBEncoding;
+  const pm = new THREE.PMREMGenerator(renderer);
+  if (!location.hash.includes("noenv")) scene.environment = pm.fromEquirectangular(tex).texture;
+}
+scene.add(new THREE.HemisphereLight(0x9fb0d0, 0x101014, 0.35));
+const key = new THREE.DirectionalLight(0xffffff, 1.6); key.position.set(15, 34, 25); scene.add(key);
+key.castShadow = true; key.shadow.mapSize.set(2048, 2048); key.shadow.bias = -0.0004; key.shadow.normalBias = 0.02;
+Object.assign(key.shadow.camera, { left: -26, right: 26, top: 34, bottom: -16, near: 5, far: 90 });
+const fill = new THREE.DirectionalLight(0x8fb4ff, 0.35); fill.position.set(-20, 8, 30); scene.add(fill);
+const rim = new THREE.DirectionalLight(0xff3a28, 1.6); rim.position.set(-25, 3, -30); scene.add(rim);
+
+// --- malzemeler ----------------------------------------------------------------
+const brushed = (() => {
+  const c = document.createElement("canvas"); c.width = c.height = 256;
+  const g = c.getContext("2d"); g.fillStyle = "#7a7a7a"; g.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 1400; i++) { const v = 90 + Math.random() * 90 | 0; g.fillStyle = `rgba(${v},${v},${v},.35)`; g.fillRect(Math.random() * 256, Math.random() * 256, 30 + Math.random() * 90, 1); }
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(3, 3); return t;
+})();
+const M = {
+  chrome: new THREE.MeshStandardMaterial({ color: 0xc9ced8, metalness: 1, roughness: 0.3, roughnessMap: brushed, side: THREE.DoubleSide }),
+  steel:  new THREE.MeshStandardMaterial({ color: 0x8d939e, metalness: 0.9, roughness: 0.5, roughnessMap: brushed, side: THREE.DoubleSide }),
+  gun:    new THREE.MeshStandardMaterial({ color: 0x4a4f58, metalness: 0.95, roughness: 0.42, roughnessMap: brushed }),
+  hose:   new THREE.MeshStandardMaterial({ color: 0x15161a, metalness: 0.1, roughness: 0.7 }),
+  dark:   new THREE.MeshStandardMaterial({ color: 0x2a2d34, metalness: 0.8, roughness: 0.45 }),
+  black:  new THREE.MeshStandardMaterial({ color: 0x111215, metalness: 0.3, roughness: 0.6 }),
+  sg90:   new THREE.MeshStandardMaterial({ color: 0x1b2a55, metalness: 0.1, roughness: 0.5 }),
+  spring: new THREE.MeshStandardMaterial({ color: 0xcfa24a, metalness: 1, roughness: 0.3 }),
+  pcb:    new THREE.MeshStandardMaterial({ color: 0x1d5e3a, metalness: 0.2, roughness: 0.6 }),
+  eye:    new THREE.MeshStandardMaterial({ color: 0x050506, metalness: 0.1, roughness: 0.3 }),
+  iris:   new THREE.MeshBasicMaterial({ color: 0xff1a08 }),
+  cav:    new THREE.MeshStandardMaterial({ color: 0x050507, roughness: 1 }),
+  ghost:  new THREE.MeshBasicMaterial({ color: 0x34e6ff, wireframe: true, transparent: true, opacity: 0.18 }),
+};
+
+// --- yardimcilar ----------------------------------------------------------------
+const UP = new THREE.Vector3(0, 1, 0);
+function add(parent, geo, mat, x = 0, y = 0, z = 0) { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); parent.add(m); return m; }
+const box = (p, sx, sy, sz, mat, x, y, z) => add(p, new THREE.BoxGeometry(sx, sy, sz), mat, x, y, z);
+const unitCyl = r => new THREE.CylinderGeometry(r, r, 1, 16);
+function place(m, a, b) {            // Y eksenli birim silindiri a->b arasina koy (dunya)
+  const d = new THREE.Vector3().subVectors(b, a), L = d.length();
+  m.position.copy(a).addScaledVector(d, 0.5);
+  m.scale.set(1, Math.max(L, 1e-4), 1);
+  m.quaternion.setFromUnitVectors(UP, d.normalize());
+}
+function tube(parent, pts, r, mat) {
+  const c = new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(...p)));
+  return add(parent, new THREE.TubeGeometry(c, 40, r, 10, false), mat);
+}
+// piston: govde (kalin) + mil (ince) — hidrolik silindir gorunumu
+function makePiston(rBody, rRod) {
+  const body = add(scene, unitCyl(rBody), M.dark), rod = add(scene, unitCyl(rRod), M.chrome);
+  const capA = add(scene, new THREE.SphereGeometry(rBody * 1.15, 12, 8), M.steel), capB = add(scene, new THREE.SphereGeometry(rRod * 1.6, 12, 8), M.steel);
+  return (a, b) => {
+    const L = a.distanceTo(b), mid = a.clone().lerp(b, Math.min(0.62, 6 / L + 0.2));
+    place(body, a, mid); place(rod, a, b); capA.position.copy(a); capB.position.copy(b);
+  };
+}
+const W = (obj, x, y, z) => obj.localToWorld(new THREE.Vector3(x, y, z));
+
+// ================= GOGUS UST KISMI (sabit): klasik bust kesimi ========================
+// boyun -> omuz egimi -> kafesin ust kismi (1.-2. kaburga, manubrium), altta kaide
+const chest = new THREE.Group(); scene.add(chest);
+const CUT = -11;                                                                             // kesim seviyesi
+const plinth = add(chest, new THREE.CylinderGeometry(1, 1, 1.4, 64), M.dark, 0, CUT - 0.7, -0.6);
+plinth.scale.set(17, 1, 9);                                                                  // eliptik kaide
+const plinthRim = add(chest, new THREE.TorusGeometry(1, 0.012, 6, 96), M.chrome, 0, CUT, -0.6);
+plinthRim.rotation.x = Math.PI / 2; plinthRim.scale.set(17, 9, 9);
+{
+  const c = document.createElement("canvas"); c.width = 1024; c.height = 96;
+  const g = c.getContext("2d"); g.fillStyle = "#16181d"; g.fillRect(0, 0, 1024, 96);
+  g.fillStyle = "#c9ced8"; g.font = "600 46px Segoe UI, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
+  g.fillText("P R O J E C T   B U S T   ·   T - 0 1", 512, 50);
+  const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding;
+  const band = add(chest, new THREE.CylinderGeometry(1.001, 1.001, 1.3, 96, 1, true, -0.55, 1.1), new THREE.MeshStandardMaterial({ map: t, metalness: 0.6, roughness: 0.4 }), 0, CUT - 0.7, -0.6);
+  band.scale.set(17, 1, 9);
+  const floor = add(scene, new THREE.CircleGeometry(60, 64), new THREE.ShadowMaterial({ opacity: 0.55 }), 0, CUT - 1.45, 0);
+  floor.rotation.x = -Math.PI / 2;
+}
+add(chest, new THREE.CylinderGeometry(1.4, 1.4, 11, 16), M.steel, 0, -5.5, -4);             // omurga (ust)
+for (let i = 0; i < 5; i++) box(chest, 3.2, 0.9, 2.4, M.dark, 0, -1.5 - i * 2.1, -4.6);
+box(chest, 4.2, 4.6, 1.2, M.chrome, 0, -2.6, 4.6);                                           // manubrium
+box(chest, 2.6, 6, 1.2, M.chrome, 0, -7.6, 4.8);                                             // sternum ust
+for (let i = 0; i < 4; i++) box(chest, 3.2, 0.25, 1.4, M.dark, 0, -5.4 - i * 1.5, 5.3);
+[[7.5, -2.6], [11.2, -6.2], [13.4, -9.6]].forEach(([rx, y], i) => {                        // ust kaburgalar (son halka kesimde)
+  const r = i === 2 ? 0.38 : 0.5;
+  for (const s of [-1, 1]) {
+    tube(chest, [[s * 1.4, y + 0.8, -4.2], [s * rx * 0.8, y + 0.3, -3.0], [s * rx, y - 0.4, 0.6], [s * rx * 0.8, y - 1.3, 3.1]], r, M.chrome);
+    tube(chest, [[s * rx * 0.8, y - 1.3, 3.1], [s * rx * 0.5, y - 1.8, 4.3], [s * 1.9, y - 2.0, 4.8]], r * 0.75, M.gun);          // kikirdak
+    add(chest, new THREE.SphereGeometry(r * 1.05, 10, 8), M.steel, s * rx * 0.8, y - 1.3, 3.1);
+  }
+});
+for (const s of [-1, 1]) {
+  tube(chest, [[s * 1.8, -1.0, 4.4], [s * 7, -0.2, 2.8], [s * 13, -1.2, 0.2], [s * 16.5, -2.6, -0.6]], 0.6, M.chrome);   // koprucuk kemigi
+  const sh = add(chest, new THREE.SphereGeometry(1, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.5), M.chrome, s * 16.8, -3.4, -0.6);
+  sh.scale.set(3.6, 2.6, 4.2);                                                                // omuz basi (kesilmis)
+  for (let k = 0; k < 3; k++) box(chest, 0.45, 0.45, 0.3, M.dark, s * (15.4 + k * 1.2), -1.4 - k * 0.2, 3.0);  // sahte civata
+  // trapez: boyun yuvasindan omuza egimli plaka + kablo demeti (yogun gorunum, sabit = kutle sorunu yok)
+  const tr = box(chest, 9, 0.6, 5, M.steel, s * 7.5, -0.8, -2.6); tr.rotation.z = s * -0.28;
+  for (let k = 0; k < 3; k++) tube(chest, [[s * 2.2, 0.2, -1.6 + k * 0.9], [s * 6, -0.6, -1.8 + k * 0.9], [s * 11, -2.2, -2.0 + k * 0.9]], 0.22, M.dark);
+  const sc = box(chest, 6, 6, 0.8, M.steel, s * 8, -6.5, -5.4); sc.rotation.y = -s * 0.35;   // kurek kemigi ust
+}
+box(chest, 9, 1.2, 7, M.dark, 0, -0.6, -0.5);                                                // boyun yuvasi
+
+// ================= BOYUN: dondurme tablasi (yaw) ================================
+const yawG = new THREE.Group(); yawG.position.set(0, 0.6, -0.5); scene.add(yawG);
+const ring = add(yawG, new THREE.TorusGeometry(5.8, 0.35, 10, 48), M.chrome); ring.rotation.x = Math.PI / 2;
+add(yawG, new THREE.CylinderGeometry(6.2, 6.2, 0.5, 40), M.dark, 0, 0.4, 0);
+for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; add(yawG, new THREE.CylinderGeometry(0.28, 0.28, 0.3, 8), M.steel, Math.cos(a) * 5.4, 0.75, Math.sin(a) * 5.4); }
+const pitchServo = [-1, 1].map(s => {                       // MG996R x2, yaw tablasinda
+  const g = new THREE.Group(); g.position.set(s * 3.8, 1.65, -3.6); yawG.add(g);   // boynun arkasinda, yatik: cene onde/ustte serbest
+  box(g, 3.7, 2.0, 4.0, M.black, 0, 0, 0);
+  box(g, 3.7, 0.25, 5.4, M.black, 0, 0.5, 0);
+  add(g, new THREE.CylinderGeometry(0.9, 0.9, 0.3, 16), M.steel, 0, 1.15, -1.2);
+  return g;
+});
+const PIVOT_Y = 12.4;                                       // insan boynu: cene ucu goguste degil, ~5 cm yukarida
+for (let i = 0; i < 8; i++) {                                // omurlar (C7..C1)
+  const y = 1.3 + i * 1.42;
+  add(yawG, new THREE.CylinderGeometry(1.45, 1.55, 0.8, 20), i % 2 ? M.dark : M.steel, 0, y, 0);
+  box(yawG, 0.8, 0.5, 2.3, M.dark, 0, y, -1.7);
+  if (i % 2 === 0) for (const s of [-1, 1]) box(yawG, 1.0, 0.35, 0.6, M.dark, s * 1.8, y, -0.2);
+}
+add(yawG, new THREE.SphereGeometry(1.25, 20, 12), M.chrome, 0, PIVOT_Y, 0);               // U mafsal
+for (const s of [-1, 1]) box(yawG, 0.5, 2.4, 2.2, M.steel, s * 1.6, PIVOT_Y - 0.8, 0);
+
+// ================= BAS (pitch + roll, pivot = kafatasi tabani / oksipital kondil) ====
+// insan kafatasi olculeri (cm): boy 19, en 14.5, verteks->menton ~22; goz cukuru merkezi bas yuksekliginin ortasinda
+const headG = new THREE.Group(); headG.position.set(0, PIVOT_Y, 0); yawG.add(headG);
+const shellParts = [];
+const CR = { c: [0, 6.0, 0.4], r: [7.2, 7.4, 9.4] };          // kafatasi elipsoidi
+// birim kure noktasini kafatasi formuna bukar: alin dik ve dar, yanlar (parietal) duz, sakak cukuru, oksiput cikintili
+function skullWarp(v) {
+  let { x, y, z } = v;
+  x *= 1 - 0.13 * Math.max(0, z) * (1 - Math.max(0, y));              // on taraf (alin) daha dar
+  x *= 1 - 0.06 * (1 - y * y);                                       // yanlar duzlesir
+  if (z > 0.45 && y < 0.55) z *= 1 - 0.07 * (1 - Math.abs(y - 0.05)); // dik alin
+  if (z < -0.4 && y < 0.25) z *= 1 + 0.06 * (1 - Math.abs(y + 0.2));  // oksipital cikinti
+  const tf = Math.exp(-(((y + 0.1) / 0.28) ** 2) - (((z - 0.25) / 0.32) ** 2));   // sakak cukuru
+  x *= 1 - 0.09 * tf;
+  v.set(x, y, z);
+}
+function skullGeo(phiS, phiL, thS, thL, ws = 72, hs = 36) {
+  const g = new THREE.SphereGeometry(1, ws, hs, phiS, phiL, thS, thL), p = g.attributes.position, v = new THREE.Vector3();
+  for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); skullWarp(v); p.setXYZ(i, v.x, v.y, v.z); }
+  g.computeVertexNormals();
+  return g;
+}
+function skullPt(theta, phi, out = 1.0) {                    // kafatasi yuzeyinde nokta (headG uzayi)
+  const v = new THREE.Vector3(-Math.cos(phi) * Math.sin(theta), Math.cos(theta), Math.sin(phi) * Math.sin(theta));
+  skullWarp(v);
+  return [CR.c[0] + v.x * CR.r[0] * out, CR.c[1] + v.y * CR.r[1] * out, CR.c[2] + v.z * CR.r[2] * out];
+}
+const cranium = add(headG, skullGeo(0, Math.PI * 2, 0, 1.78), M.chrome, ...CR.c);        // kubbe: kas cizgisine kadar
+cranium.scale.set(...CR.r); shellParts.push(cranium);
+const lowerVault = add(headG, skullGeo(Math.PI - 0.55, Math.PI + 1.1, 1.74, 0.5, 48, 10), M.chrome, ...CR.c);  // yan + arka alt kabuk
+lowerVault.scale.set(...CR.r); shellParts.push(lowerVault);
+// panel cizgileri (sutur) + sahte civata: gram yok, yogunluk cok
+const seam = pts => { const t = tube(headG, pts, 0.07, M.dark); shellParts.push(t); return t; };
+const sag = [], cor = [], lam = [];
+for (let i = 0; i <= 30; i++) { const t = -1.45 + i / 30 * 2.9; sag.push(skullPt(Math.abs(t) + 0.001, t > 0 ? Math.PI / 2 : -Math.PI / 2, 1.006)); }   // alin -> arka
+for (let i = 0; i <= 30; i++) { const t = -1.62 + i / 30 * 3.24; cor.push(skullPt(Math.abs(t) + 0.001, t > 0 ? Math.PI - 0.32 : 0.32, 1.006)); }   // kulak -> kulak
+for (let i = 0; i <= 20; i++) { const ph = Math.PI + 0.35 + i / 20 * (Math.PI - 0.7); lam.push(skullPt(1.95, ph, 1.006)); }                     // lambdoid
+seam(sag); seam(cor); seam(lam);
+const boltGeo = new THREE.CylinderGeometry(0.22, 0.22, 0.14, 6);
+for (let i = 3; i < cor.length - 3; i += 3) {
+  const [x, y, z] = cor[i], n = new THREE.Vector3(x - CR.c[0], y - CR.c[1], z - CR.c[2]).normalize();
+  for (const d of [-0.45, 0.45]) { const b = add(headG, boltGeo, M.steel, x, y, z + d); b.quaternion.setFromUnitVectors(UP, n); shellParts.push(b); }
+}
+// goz cukurlari: derin oyuk + kemik kenar, hafif yana bakar
+const EYE = [[-3.25, 3.0, 7.7], [3.25, 3.0, 7.7]];
+const cavMat = new THREE.MeshStandardMaterial({ color: 0x08080a, roughness: 1, side: THREE.BackSide });
+for (const [x, y, z] of EYE) {
+  const s = Math.sign(x);
+  const rimG = new THREE.Group(); rimG.position.set(x, y, z + 0.9); rimG.rotation.y = s * 0.2; headG.add(rimG);
+  const rimM = add(rimG, new THREE.TorusGeometry(1.95, 0.28, 12, 40), M.chrome); rimM.scale.set(1.05, 0.88, 0.9);
+  const cav = add(rimG, new THREE.CylinderGeometry(1.9, 1.5, 3.4, 32, 1, true), cavMat, 0, 0, -1.7); cav.rotation.x = Math.PI / 2; cav.scale.set(1.05, 1, 0.88);
+}
+tube(headG, [[-6.3, 4.4, 6.6], [-4.6, 5.0, 8.6], [-1.6, 4.8, 9.6], [0, 4.5, 9.8], [1.6, 4.8, 9.6], [4.6, 5.0, 8.6], [6.3, 4.4, 6.6]], 0.42, M.chrome);  // kas kemeri
+// burun: kemik kopru + armut bicimli aciklik
+box(headG, 1.1, 2.0, 0.8, M.chrome, 0, 3.2, 9.4).rotation.x = -0.25;
+{
+  const sh = new THREE.Shape();
+  sh.moveTo(0, 1.6); sh.bezierCurveTo(0.7, 1.4, 1.25, 0.2, 1.2, -0.6); sh.bezierCurveTo(1.1, -1.3, 0.5, -1.45, 0, -1.2);
+  sh.bezierCurveTo(-0.5, -1.45, -1.1, -1.3, -1.2, -0.6); sh.bezierCurveTo(-1.25, 0.2, -0.7, 1.4, 0, 1.6);
+  add(headG, new THREE.ExtrudeGeometry(sh, { depth: 0.6, bevelEnabled: true, bevelThickness: 0.15, bevelSize: 0.18, bevelSegments: 2 }), M.cav, 0, 0.5, 8.9);
+  const rim = add(headG, new THREE.ExtrudeGeometry(sh, { depth: 0.4, bevelEnabled: false }), M.steel, 0, 0.5, 8.75); rim.scale.set(1.25, 1.12, 1);
+}
+for (const s of [-1, 1]) {
+  const zy = add(headG, new THREE.SphereGeometry(1, 20, 14), M.chrome, s * 5.0, 1.3, 7.5); zy.scale.set(1.5, 1.1, 1.3);   // elmacik govdesi
+  tube(headG, [[s * 4.6, 1.6, 8.3], [s * 5.9, 1.2, 7.0], [s * 6.7, 1.0, 4.8], [s * 6.8, 0.9, 2.6], [s * 6.5, 0.8, 1.2]], 0.55, M.chrome);  // zigomatik kemer
+  tube(headG, [[s * 6.2, 4.4, 6.6], [s * 6.3, 3.0, 7.0], [s * 5.4, 1.8, 7.6]], 0.42, M.chrome);                // goz cukuru dis kenari
+  add(headG, new THREE.CylinderGeometry(0.75, 0.75, 0.6, 16), M.dark, s * 6.6, 0.3, 0.9).rotation.z = Math.PI / 2;   // kulak / TMJ yuvasi
+  for (let k = 0; k < 3; k++) box(headG, 0.18, 0.18, 2.6, M.dark, s * (6.95 - k * 0.05), 3.0 + k * 0.7, 3.3);       // sakak oluklari
+}
+box(headG, 7.4, 3.6, 0.4, M.dark, 0, 0.9, 6.3);                                             // yuz ici arka plaka (servolari saklar)
+// ust cene (maksilla): onde yay cizen kemik + disler
+const maxilla = add(headG, new THREE.CylinderGeometry(4.0, 3.7, 2.4, 40, 1, true, -1.2, 2.4), M.steel, 0, -1.4, 5.1);
+maxilla.scale.set(1, 1, 1.12);
+const teeth = (parent, y, zc, R, n = 14) => {
+  for (let i = 0; i < n; i++) {
+    const a = -1.15 + i * 2.3 / (n - 1), front = Math.abs(a) < 0.45;
+    const t = box(parent, front ? 0.62 : 0.8, front ? 1.05 : 0.9, front ? 0.45 : 0.75, M.chrome, R * Math.sin(a), y, zc + R * Math.cos(a) * 1.12);
+    t.rotation.y = a;
+  }
+};
+teeth(headG, -3.0, 5.1, 3.85);
+{ const gum = add(headG, new THREE.CylinderGeometry(3.6, 3.6, 0.7, 40, 1, true, -1.2, 2.4), M.gun, 0, -2.3, 5.1); gum.scale.z = 1.12; }
+const hexBolt = (parent, x, y, z, ax = "z", r = 0.26) => { const b = add(parent, new THREE.CylinderGeometry(r, r, 0.16, 6), M.steel, x, y, z); if (ax === "z") b.rotation.x = Math.PI / 2; else if (ax === "x") b.rotation.z = Math.PI / 2; return b; };
+for (let k = -2; k <= 2; k++) hexBolt(headG, k * 1.5, -1.1, 5.1 + Math.sqrt(16 - (k * 1.5) ** 2) * 1.12 + 0.05);      // maksilla civatalari
+for (const s of [-1, 1]) { hexBolt(headG, s * 5.6, 1.6, 8.3); hexBolt(headG, s * 7.0, 0.9, 3.4, "x"); hexBolt(headG, s * 6.95, 0.3, 0.9, "x", 0.4); }
+// mekanizma (kafatasi tabani): goz SG90'lari goz arkasinda, PCA arkada, cene MG996R pivotun arkasinda
+box(headG, 9.5, 0.5, 8.5, M.dark, 0, -0.2, 2.2);
+const sg = [[-2.6, 1.0, 4.6], [2.6, 1.0, 4.6], [-1.3, 2.4, 3.3], [1.3, 2.4, 3.3], [0, 0.9, 2.9]];
+sg.forEach(([x, y, z]) => { box(headG, 2.3, 2.2, 1.2, M.sg90, x, y, z); box(headG, 3.2, 0.2, 1.2, M.sg90, x, y + 0.7, z); });
+const jawServo = new THREE.Group(); jawServo.position.set(4.4, 2.6, -3.2); headG.add(jawServo);   // sag yanda, boyun ve yaydan uzak
+box(jawServo, 2.0, 3.7, 4.0, M.black, 0, 0, 0); box(jawServo, 2.6, 0.25, 5.4, M.black, 0, 0.9, 0);
+add(jawServo, new THREE.CylinderGeometry(0.9, 0.9, 0.3, 16), M.steel, 0, 2.0, 1.2);
+const pcb = box(headG, 6.0, 2.5, 0.25, M.pcb, 0, 5.2, -7.2); pcb.rotation.x = 0.35;
+for (let k = 0; k < 8; k++) box(headG, 0.25, 0.4, 0.25, M.black, -2.6 + k * 0.75, 6.3, -6.75);
+const ghostSkull = add(headG, skullGeo(0, Math.PI * 2, 0, 2.2, 32, 16), M.ghost, ...CR.c);
+ghostSkull.scale.set(...CR.r); ghostSkull.visible = false;
+
+// gozler + deklansor kapaklar
+const eyes = EYE.map(([x, y, z]) => {
+  const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.order = "YXZ"; headG.add(g);
+  add(g, new THREE.SphereGeometry(1.25, 32, 16), M.eye);
+  add(g, new THREE.CircleGeometry(0.6, 32), M.iris, 0, 0, 1.27);
+  add(g, new THREE.TorusGeometry(0.66, 0.07, 8, 32), M.steel, 0, 0, 1.24);
+  add(g, new THREE.CylinderGeometry(0.12, 0.12, 2.6, 8), M.steel, 0, 0, -1.6).rotation.x = Math.PI / 2;  // arka cubuk
+  return g;
+});
+const lids = EYE.map(([x, y, z]) => {
+  const a = new THREE.Group(), b = new THREE.Group();
+  a.position.set(x, y, z); b.position.set(x, y, z); headG.add(a); headG.add(b);
+  add(a, new THREE.SphereGeometry(1.45, 32, 12, 0, Math.PI * 2, 0, 1.45), M.chrome);
+  add(b, new THREE.SphereGeometry(1.58, 32, 12, -1.3, 2.6 + Math.PI, 0, 1.2), M.steel);
+  return { a, b };
+});
+const eyeRods = sg.slice(0, 4).map(() => add(scene, unitCyl(0.09), M.steel));
+const glowTex = (() => {
+  const c = document.createElement("canvas"); c.width = c.height = 128;
+  const g = c.getContext("2d"), r = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  r.addColorStop(0, "rgba(255,90,60,1)"); r.addColorStop(0.18, "rgba(255,40,20,.85)"); r.addColorStop(0.5, "rgba(255,20,10,.18)"); r.addColorStop(1, "rgba(255,0,0,0)");
+  g.fillStyle = r; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c);
+})();
+eyes.forEach(g => {
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+  sp.position.set(0, 0, 1.35); sp.scale.set(2.6, 2.6, 1); g.add(sp);
+  add(g, new THREE.TorusGeometry(0.42, 0.04, 6, 32), M.dark, 0, 0, 1.28);                 // lens halkasi
+  const pl = new THREE.PointLight(0xff2a14, 1.6, 5, 2); pl.position.set(0, 0, 1.6); g.add(pl);
+});
+
+// alt cene (mandibula): kondil -> ramus -> gonion -> govde -> cene ucu, V biciminde daralir
+const jawSamples = [];                                       // cene ornek noktalari (tup ekseni, r=0.8)
+const jawG = new THREE.Group(); jawG.position.set(0, 0.3, 1.0); headG.add(jawG);
+for (const s of [-1, 1]) {
+  const jp = [[s * 6.1, 0, 0], [s * 6.0, -2.6, -0.3], [s * 5.6, -5.4, -0.4], [s * 5.0, -6.6, 0.6], [s * 4.0, -7.4, 3.0], [s * 2.4, -8.0, 5.4], [s * 0.4, -8.3, 6.6]];
+  tube(jawG, jp, 0.8, M.chrome);
+  jawSamples.push(...new THREE.CatmullRomCurve3(jp.map(q => new THREE.Vector3(...q))).getPoints(40));
+  tube(jawG, [[s * 5.95, -2.4, 0.0], [s * 5.6, -1.4, 1.4], [s * 5.3, 0.2, 2.4]], 0.45, M.chrome);                 // koronoid cikinti
+  add(jawG, new THREE.SphereGeometry(0.85, 16, 10), M.dark, s * 6.1, 0, 0);
+  for (let k = 0; k < 3; k++) add(jawG, new THREE.CylinderGeometry(0.22, 0.22, 0.2, 6), M.steel, s * (5.9 - k * 0.05), -3.4 - k * 1.0, -0.3).rotation.z = Math.PI / 2;
+  const pl = box(jawG, 0.5, 3.6, 2.6, M.steel, s * 5.75, -4.4, 0.3); pl.rotation.z = s * 0.05;                     // ramus plakasi
+}
+const chin = add(jawG, new THREE.CylinderGeometry(3.45, 2.9, 3.0, 40, 1, true, -1.15, 2.3), M.steel, 0, -6.4, 4.1);
+chin.scale.set(1, 1, 1.12);
+box(jawG, 3.0, 1.2, 1.2, M.chrome, 0, -8.2, 7.6);
+teeth(jawG, -4.25, 4.1, 3.6);
+{ const gum = add(jawG, new THREE.CylinderGeometry(3.45, 3.45, 0.6, 40, 1, true, -1.15, 2.3), M.gun, 0, -4.95, 4.1); gum.scale.z = 1.12; }
+for (const s of [-1, 1]) hexBolt(jawG, s * 6.45, 0, 0, "x", 0.42);
+const lowerJawArm = box(jawG, 0.5, 0.6, 2.6, M.steel, 6.1, 0.4, -1.3);                        // kondilin arkasinda kaldirac (yalniz sag)
+
+// pistonlar: boyun (2), yanak (2), cene surucusu (1), goz cubuklari
+const neckP = [-1, 1].map(() => makePiston(0.55, 0.28));
+const cheekP = [-1, 1].map(() => makePiston(0.38, 0.18));
+const jawRod = add(scene, unitCyl(0.14), M.steel);
+const scmP = [-1, 1].map(() => makePiston(0.5, 0.24));          // T-800 boyun pistonlari (kozmetik, ~10 g)
+const SCM_HEAD = s => [s * 6.6, 1.0, -5.6], SCM_BASE = s => [s * 5.8, 0.7, -1.6];   // ense-yan pistonlari: ramusun ARKASINDAN iner (onde olunca cene egmeyi kilitliyordu)
+function makeCable(r, n = 12) {
+  const segs = Array.from({ length: n }, () => add(scene, unitCyl(r), M.hose));
+  const pts = Array.from({ length: n + 1 }, () => new THREE.Vector3());
+  return (a, b, sag) => {
+    const c = a.clone().lerp(b, 0.5).add(sag);
+    for (let i = 0; i <= n; i++) { const t = i / n, u = 1 - t; pts[i].set(0, 0, 0).addScaledVector(a, u * u).addScaledVector(c, 2 * u * t).addScaledVector(b, t * t); }
+    for (let i = 0; i < n; i++) place(segs[i], pts[i], pts[i + 1]);
+  };
+}
+const cables = [[-1.8, 0.24], [-0.9, 0.18], [0.9, 0.18], [1.8, 0.24]].map(([x, r]) => ({ x, f: makeCable(r) }));
+// denge yayi: helis, pivotun arkasinda
+const helix = (() => {
+  const pts = []; for (let i = 0; i <= 400; i++) { const t = i / 400, a = t * Math.PI * 2 * 14; pts.push(new THREE.Vector3(0.45 * Math.cos(a), t, 0.45 * Math.sin(a))); }
+  const curve = new THREE.CatmullRomCurve3(pts);
+  const m = add(scene, new THREE.TubeGeometry(curve, 400, 0.07, 6, false), M.spring);
+  m.geometry.translate(0, -0.5, 0);
+  return m;
+})();
+function placeSpring(a, b) {
+  const d = new THREE.Vector3().subVectors(b, a), L = d.length();
+  helix.position.copy(a).addScaledVector(d, 0.5);
+  helix.scale.set(1, L, 1);
+  helix.quaternion.setFromUnitVectors(UP, d.normalize());
+}
+
+// kutle / pivot gostergesi
+const massG = new THREE.Group(); massG.visible = false; headG.add(massG);
+add(massG, new THREE.TorusGeometry(1.9, 0.08, 8, 40), new THREE.MeshBasicMaterial({ color: 0x34e6ff }), 0, 0, 0).rotation.y = Math.PI / 2;
+const com = add(massG, new THREE.SphereGeometry(0.55, 16, 10), new THREE.MeshBasicMaterial({ color: 0xffd23a }), 0, 4.6, 2.2);
+const comLine = add(massG, new THREE.CylinderGeometry(0.05, 0.05, 1, 6), new THREE.MeshBasicMaterial({ color: 0xffd23a }));
+place(comLine, new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 4.6, 2.2));
+
+// ================= HAREKET MODELI ==============================================
+const D2R = Math.PI / 180, clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const rnd = (a, b) => a + Math.random() * (b - a);
+const mj = t => t * t * t * (10 - 15 * t + 6 * t * t);       // minimum-jerk profili
+const S = {
+  mode: "mouse", ex: "notr", talk: false,
+  gaze: { y: 0, p: 0 },                 // hedef bakis (dunya, derece)
+  eyeG: { y: 0, p: 0 },                 // gozun dunyadaki bakisi (sakkadlarla ilerler)
+  sac: null,
+  head: { y: 0, p: 0, r: 0, vy: 0, vp: 0, vr: 0 },
+  headT: { y: 0, p: 0 },
+  headDelay: 0,
+  blink: { t: -1, next: 3 }, wink: -1,
+  jaw: 0, jawT: 0, talkNext: 0,
+  auto: { next: 0, poi: { y: 0, p: 0 }, poiNext: 0 },
+};
+const EX = {                            // ifade: kapak kismasi, bas yatirma/egme ofseti, goz ofseti
+  notr:    { lid: 0.0,  roll: 0,   pitch: 0,  eyeP: 0, jaw: 0 },
+  merak:   { lid: -0.15, roll: 11, pitch: 3,  eyeP: 2, jaw: 0.06 },
+  supheli: { lid: 0.5,  roll: -4,  pitch: -3, eyeP: 0, jaw: 0 },
+  tehdit:  { lid: 0.38, roll: 0,   pitch: -9, eyeP: 9, jaw: 0 },
+};
+let mouse = { x: 0.5, y: 0.5 };
+addEventListener("pointermove", e => { mouse.x = e.clientX / innerWidth; mouse.y = e.clientY / innerHeight; });
+
+function startSaccade(to) {
+  const A = Math.hypot(to.y - S.eyeG.y, to.p - S.eyeG.p);
+  S.sac = { from: { ...S.eyeG }, to: { ...to }, t: 0, dur: (2.2 * A + 21) / 1000 };
+  if (A > 25 && Math.random() < 0.6) triggerBlink();           // buyuk bakis kaymasinda kirpma
+  S.headDelay = 0.03;                                         // bas gozden ~30 ms sonra baslar
+}
+function triggerBlink() { if (S.blink.t < 0) S.blink.t = 0; }
+function blinkAmt(t) {                                        // 80 ms kapan, 40 ms tut, 200 ms ac
+  if (t < 0) return 0;
+  if (t < 0.08) return mj(t / 0.08);
+  if (t < 0.12) return 1;
+  if (t < 0.32) return 1 - mj((t - 0.12) / 0.2);
+  return 0;
+}
+function spring(o, k, target, dt, w) {                        // kritik sonumlu yay
+  const v = "v" + k;
+  o[v] += (w * w * (target - o[k]) - 2 * w * o[v]) * dt;
+  o[k] += o[v] * dt;
+}
+
+function update(dt, time) {
+  const ex = EX[S.ex];
+  // 1) hedef
+  if (S.mode === "mouse") {
+    S.gaze.y = (mouse.x - 0.5) * 110;
+    S.gaze.p = -(mouse.y - 0.45) * 60;
+  } else {
+    const A = S.auto;
+    if (time > A.poiNext) { A.poi = { y: rnd(-55, 55), p: rnd(-15, 15) }; A.poiNext = time + rnd(2.5, 6); }
+    if (time > A.next) { S.gaze.y = A.poi.y + rnd(-6, 6); S.gaze.p = A.poi.p + rnd(-4, 4); A.next = time + rnd(0.35, 1.4); }
+  }
+  // 2) sakkad: hata > 1.5 derece ise yeni sakkad (simde mikrosakkad da var)
+  if (!S.sac && Math.hypot(S.gaze.y - S.eyeG.y, S.gaze.p - S.eyeG.p) > 1.5) startSaccade(S.gaze);
+  if (S.sac) {
+    S.sac.t += dt;
+    const u = Math.min(1, S.sac.t / S.sac.dur), e = mj(u);
+    S.eyeG.y = S.sac.from.y + (S.sac.to.y - S.sac.from.y) * e;
+    S.eyeG.p = S.sac.from.p + (S.sac.to.p - S.sac.from.p) * e;
+    if (u >= 1) S.sac = null;
+  } else if (Math.random() < dt * 1.2) {                      // mikrosakkad (~1/sn, <0.5 derece)
+    S.eyeG.y += rnd(-0.4, 0.4); S.eyeG.p += rnd(-0.3, 0.3);
+  }
+  // 3) bas: bakis > 20 derece ayrilirsa hedefe dogru (gozden gec), kucuklerde gozler yeter
+  if (S.headDelay > 0) S.headDelay -= dt;
+  else {
+    if (Math.abs(S.gaze.y - S.headT.y) > 20) S.headT.y = S.gaze.y * 0.85;
+    if (Math.abs(S.gaze.p - S.headT.p) > 14) S.headT.p = S.gaze.p * 0.7;
+  }
+  const sway = Math.sin(time * 0.7) * 0.6 + Math.sin(time * 1.9) * 0.3;
+  spring(S.head, "y", clamp(S.headT.y, -70, 70) + sway, dt, 7);
+  spring(S.head, "p", clamp(S.headT.p + ex.pitch, -25, 20), dt, 6.5);
+  spring(S.head, "r", ex.roll + sway * 0.6, dt, 5);
+  // 4) goz = bakis - bas (VOR: bas donerken gozler hedefte kalir)
+  const eY = clamp(S.eyeG.y - S.head.y, -32, 32), eP = clamp(S.eyeG.p - S.head.p + ex.eyeP, -24, 24);
+  // 5) kirpma: dakikada ~11-20
+  if (S.blink.t >= 0) { S.blink.t += dt; if (S.blink.t > 0.32) { S.blink.t = -1; S.blink.next = time + rnd(3, 5.5); } }
+  else if (time > S.blink.next && !location.hash.includes("noblink")) triggerBlink();
+  const bl = blinkAmt(S.blink.t);
+  let wk = 0; if (S.wink >= 0) { S.wink += dt; wk = S.wink < 0.12 ? mj(S.wink / 0.12) : S.wink < 0.45 ? 1 : S.wink < 0.7 ? 1 - mj((S.wink - 0.45) / 0.25) : (S.wink = -1, 0); }
+  // 6) cene
+  if (S.talk) { if (time > S.talkNext) { S.jawT = Math.random() < 0.25 ? 0.02 : rnd(0.08, 0.32); S.talkNext = time + rnd(0.09, 0.22); } }
+  else S.jawT = ex.jaw;
+  S.jaw += (S.jawT - S.jaw) * (1 - Math.exp(-dt / 0.04));
+
+  // ---- uygula ----
+  yawG.rotation.y = S.head.y * D2R;
+  headG.rotation.set(-S.head.p * D2R, 0, -S.head.r * D2R);
+  eyes.forEach(g => g.rotation.set(-eP * D2R, eY * D2R, 0));
+  lids.forEach((l, i) => {
+    // kapak goz egimini izler (asagi bakinca iner), ifade kismasi + kirpma uzerine
+    const base = -1.05 - 0.75 * eP * D2R + ex.lid * 1.25;   // acikken kapak kas altina gizlenir
+    const close = Math.max(bl, i === 1 ? wk : 0);
+    const th = base + (1.3 - base) * close;
+    l.a.rotation.x = th; l.b.rotation.x = base + (1.22 - base) * close * 0.92 + 0.08;
+  });
+  jawG.rotation.x = S.jaw;
+  return { eY, eP, bl, wk };
+}
+
+function updateLinks() {
+  scene.updateMatrixWorld(true);
+  [-1, 1].forEach((s, i) => {
+    neckP[i](W(pitchServo[i], 0, 1.3, -1.9), W(headG, s * 3.0, -0.6, -2.6));
+    cheekP[i](W(headG, s * 6.4, 2.6, 4.4), W(jawG, s * 5.5, -5.6, 1.2));
+  });
+  place(jawRod, W(jawServo, 0, 2.1, 1.2), W(lowerJawArm, 0, 0, -1.2));
+  eyeRods.forEach((r, i) => { const e = eyes[i % 2]; place(r, W(headG, ...sg[i]).add(new THREE.Vector3(0, 1.0, 0)), W(e, i < 2 ? 0 : 0.9, i < 2 ? -0.9 : 0, -2.4)); });
+  placeSpring(W(headG, 0, -0.2, -6.4), W(yawG, 0, 0.9, -4.4));
+  [-1, 1].forEach((s, i) => scmP[i](W(headG, ...SCM_HEAD(s)), W(yawG, ...SCM_BASE(s))));
+  const back = W(yawG, 0, 0, -1).sub(W(yawG, 0, 0, 0));
+  cables.forEach(c => c.f(W(headG, c.x, -0.4, -4.2), W(yawG, c.x * 1.3, 0.75, -5.6), back.clone().multiplyScalar(1.6).add(new THREE.Vector3(0, -1.2, 0))));
+  // kutle merkezi pivotun onunde: yay bu momenti dengeler
+}
+
+// ================= CENE-BOYUN BOSLUGU (canli kontrol + egme kilidi) ==============
+// engeller yawG uzayinda: omur kolonu (kapsul r=1.6), doner tabla (r=5), iki egme servosu (kutu)
+const OBS_BOX = [-1, 1].map(s => ({ c: new THREE.Vector3(s * 3.8, 1.65, -3.6), h: new THREE.Vector3(1.85, 1.0, 2.7) }));
+const _q = new THREE.Vector3();
+function clearanceCm() {
+  scene.updateMatrixWorld(true);
+  let best = 1e9;
+  const scm = [-1, 1].map(s => [W(headG, ...SCM_HEAD(s)), W(yawG, ...SCM_BASE(s))]);
+  const _w = new THREE.Vector3(), _ab = new THREE.Vector3();
+  for (const p of jawSamples) {
+    _w.copy(p); jawG.localToWorld(_w);
+    for (const [a, b] of scm) {                                   // piston govdesi r=0.5
+      _ab.subVectors(b, a); const t = clamp(_ab.dot(_q.subVectors(_w, a)) / _ab.lengthSq(), 0, 1);
+      best = Math.min(best, _w.distanceTo(a.clone().addScaledVector(_ab, t)) - 0.5 - 0.8);
+    }
+    _q.copy(_w); yawG.worldToLocal(_q);
+    const yy = clamp(_q.y, 0.9, PIVOT_Y);
+    let d = Math.hypot(_q.x, _q.y - yy, _q.z) - 1.6;
+    const dr = Math.hypot(_q.x, _q.z) - 6.2, dy = _q.y - 0.65;
+    d = Math.min(d, dy > 0 ? (dr > 0 ? Math.hypot(dr, dy) : dy) : Math.max(dr, 0));
+    for (const b of OBS_BOX) {
+      const ax = Math.max(Math.abs(_q.x - b.c.x) - b.h.x, 0), ay = Math.max(Math.abs(_q.y - b.c.y) - b.h.y, 0), az = Math.max(Math.abs(_q.z - b.c.z) - b.h.z, 0);
+      d = Math.min(d, Math.hypot(ax, ay, az));
+    }
+    best = Math.min(best, d - 0.8);
+  }
+  return best;
+}
+const MIN_CLR = 0.5;                                          // 5 mm guvenlik payi
+let clr = 0, locked = false;
+function enforceClearance() {                                  // firmware kilidinin simdeki karsiligi: egmeyi geri al
+  locked = false;
+  clr = clearanceCm();
+  for (let k = 0; k < 60 && clr < MIN_CLR && S.head.p < 0; k++) {          // yalniz asagi egmeyi sinirlar
+    locked = true;
+    S.head.p += 0.5; S.head.vp = Math.max(0, S.head.vp);
+    headG.rotation.set(-S.head.p * D2R, 0, -S.head.r * D2R);
+    clr = clearanceCm();
+  }
+}
+
+scene.traverse(o => { if (o.isMesh && o.material !== M.ghost) { o.castShadow = true; o.receiveShadow = true; } });
+
+// ================= UI ============================================================
+const $ = id => document.getElementById(id);
+function setMode(m) { S.mode = m; $("mMouse").classList.toggle("on", m === "mouse"); $("mAuto").classList.toggle("on", m === "auto"); }
+$("mMouse").onclick = () => setMode("mouse");
+$("mAuto").onclick = () => setMode("auto");
+document.querySelectorAll("[data-ex]").forEach(b => b.onclick = () => {
+  S.ex = b.dataset.ex; document.querySelectorAll("[data-ex]").forEach(x => x.classList.toggle("on", x === b));
+});
+$("wink").onclick = () => { S.wink = 0; };
+$("talk").onclick = () => { S.talk = !S.talk; $("talk").classList.toggle("on", S.talk); };
+$("shell").onclick = () => {
+  const hide = $("shell").classList.toggle("on");
+  shellParts.forEach(p => p.visible = !hide); ghostSkull.visible = hide;
+};
+$("mass").onclick = () => { massG.visible = $("mass").classList.toggle("on"); };
+$("spin").onclick = () => { controls.autoRotate = $("spin").classList.toggle("on"); controls.autoRotateSpeed = 0.8; };
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (canvas.width !== Math.floor(w * renderer.getPixelRatio())) { renderer.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
+}
+const readEl = $("read");
+let last = performance.now(), acc = 0;
+function loop(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  const r = update(dt, now / 1000);
+  enforceClearance();
+  updateLinks();
+  resize(); controls.update(); renderer.render(scene, cam);
+  if ((acc += dt) > 0.1) {
+    acc = 0;
+    const f = v => (v >= 0 ? " " : "") + v.toFixed(1).padStart(5);
+    readEl.innerHTML =
+      `boyun  yaw <b>${f(S.head.y)}°</b>  egme <b>${f(S.head.p)}°</b>\n` +
+      `       yatir <b>${f(S.head.r)}°</b>\n` +
+      `goz    yaw <b>${f(r.eY)}°</b>  pitch <b>${f(r.eP)}°</b>\n` +
+      `kapak  kirpma <b>${(r.bl * 100).toFixed(0).padStart(3)}%</b>  sag <b>${(r.wk * 100).toFixed(0).padStart(3)}%</b>\n` +
+      `cene   <b>${(S.jaw / D2R).toFixed(0).padStart(3)}°</b>   sakkad <b>${S.sac ? "●" : "·"}</b>\n` +
+      `cene-boyun bosluk <b>${(clr * 10).toFixed(0).padStart(3)} mm</b>${locked ? "  <b style='color:#ff3b2a'>KILIT</b>" : ""}
+` +
+      (massG.visible ? `\nkafa hedef ≤500 g (H2: ~490 g)\negme payi 2:1 + yay ≈ 16 (tahmin)\nsari = kutle merkezi, mavi = pivot` : "");
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

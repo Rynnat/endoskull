@@ -1,0 +1,149 @@
+SONUC: TEMIZ
+KAPSAM:
+  OLCULDU:   [tek_govde] 28 parca: ayri govde sayisi (manifold decompose)
+  OLCULDU:   [havada_ada] 28 parca: 0.2 mm katmanlarla havada baslayan bilesen (>= 0.05 mm2)
+  OLCULDU:   [sarkma] 28 parca (baski yonu): 0.2 mm katmanda bir alttaki kesitten > 5.0 mm uzak yeni malzeme, iki yandan <= 25.0 mm kopru degilse (alan > 1.0 mm2) = konsol
+  OLCULDU:   [tabla] 28 parca: baski yonunde sinir kutusu <= 200 x 200 x 240
+  OLCULDU:   [tabla_yerlesim] tabla STL'leri 0..220 icinde, alt yuz z=0
+  OLCULDU:   [tabla_ortusme] 2 poz, 235 parca cifti: kesisim > 0.01 mm3 ve bosluk < 2.0 mm
+  OLCULDU:   [cakisma_K1_K2mg] 14 poz, 14 parca cifti: kesisim > 0.01 mm3 ve bosluk < 0.3 mm
+  OLCULDU:   [cakisma_K4_K2sg] 20 poz, 18 parca cifti: kesisim > 0.01 mm3 ve bosluk < 0.3 mm
+  OLCULDU:   [cakisma_K3] 6 poz, 6 parca cifti: kesisim > 0.01 mm3 ve bosluk < 0.3 mm
+  OLCULDU:   [cakisma_K5_kardan] 18 poz, 5 parca cifti: kesisim > 0.01 mm3 ve bosluk < 0.3 mm
+  OLCULDU:   [cakisma_K5_teleskop] 9 poz, 3 parca cifti: kesisim > 0.01 mm3 ve bosluk < 0.3 mm
+  OLCULDU:   [cakisma_K2_pim] 6 poz, 2 parca cifti: kesisim > 0.01 mm3 ve bosluk < 0.3 mm
+  OLCULDU:   [montaj_sokme_K1] 3 adim, 4 parca: dogrusal sokme yolu (1.0 mm adim, esik 0.5 mm3 / takili kesisim ustu)
+  OLCULDU:   [montaj_sokme_K4] 4 adim, 5 parca: dogrusal sokme yolu (1.0 mm adim, esik 0.5 mm3 / takili kesisim ustu)
+  OLCULDU:   [montaj_sokme_K3] 3 adim, 5 parca: dogrusal sokme yolu (1.0 mm adim, esik 0.5 mm3 / takili kesisim ustu)
+  OLCULDU:   [vida_envanter] 20 vida: boy >= sikisan + somun + 1 dis ve boy envanter/satin listesinde
+  OLCULMEDI: [havada_ada] duz sarkma / kopru alani ve 45 deg ustu egimler (ada degil, bagli sarkma) olculmedi
+  OLCULMEDI: [sarkma] kopru yolunun parcanin icinden gectigi ve kopru sarkma miktari olculmedi; <= konsol_maks egimli sarkma (45 deg alti) ayrica olculmedi
+  OLCULMEDI: [tabla] parcanin tablaya gercekten oturdugu yon (STL yonu dogru varsayildi); capraz yerlesim olculmedi
+  OLCULMEDI: [tabla_ortusme] pozlar arasi ara acilar olculmedi (yalniz verilen 2 poz)
+  OLCULMEDI: [tabla_ortusme] slicer brim/etek alani ve Orca'nin kendi yerlestirmesi (--arrange) olculmedi
+  OLCULMEDI: [cakisma_K1_K2mg] muaf cift mg996r x mg_korna: kit korna servo miline gecer (satin alinan cift, spline tasarim geregi)
+  OLCULMEDI: [cakisma_K1_K2mg] ayni hareket grubundaki 28 yakin cift-pozda min bosluk olculmedi (yalniz kesisim)
+  OLCULMEDI: [cakisma_K1_K2mg] pozlar arasi ara acilar olculmedi (yalniz verilen 14 poz)
+  OLCULMEDI: [cakisma_K1_K2mg] kol asagi yonde durdurucu (cikinti) acisinin 0.5 deg ustunden asagisi olculmedi: temas KASITLI (sarkma siniri)
+  OLCULMEDI: [cakisma_K4_K2sg] muaf cift sg90 x sg_korna: kit korna servo miline gecer (satin alinan cift)
+  OLCULMEDI: [cakisma_K4_K2sg] ayni hareket grubundaki 40 yakin cift-pozda min bosluk olculmedi (yalniz kesisim)
+  OLCULMEDI: [cakisma_K4_K2sg] pozlar arasi ara acilar olculmedi (yalniz verilen 20 poz)
+  OLCULMEDI: [cakisma_K4_K2sg] K4 tel (Z-bukum O1) modellenmedi: tel yolu x krank/disk/direk carpismasi olculmedi (gozle, OLCUM_FORMU K4)
+  OLCULMEDI: [cakisma_K4_K2sg] K2 SG kolu K4'te yalniz servo -5/0/+5 deg'de olculdu (olcu diregi +-9 deg'de kola deger, kasitli)
+  OLCULMEDI: [cakisma_K3] muaf cift K3_kizak x rotil_B: rotil gozu kizak ustune M3 ile sikilir (temas tasarim geregi)
+  OLCULMEDI: [cakisma_K3] muaf cift K3_taban x rotil_A: rotil gozu direk ustune M3 ile sikilir (temas tasarim geregi)
+  OLCULMEDI: [cakisma_K3] muaf cift rod x rotil_A: rod rotile vidalanir (satin alinan cift)
+  OLCULMEDI: [cakisma_K3] muaf cift rod x rotil_B: rod rotile vidalanir (satin alinan cift)
+  OLCULMEDI: [cakisma_K3] ayni hareket grubundaki 0 yakin cift-pozda min bosluk olculmedi (yalniz kesisim)
+  OLCULMEDI: [cakisma_K3] pozlar arasi ara acilar olculmedi (yalniz verilen 6 poz)
+  OLCULMEDI: [cakisma_K3] kizak x kanal TABANI temasi (kayma yuzeyi) olculmedi: kizak 0.35 kaldirilarak yalniz yan bosluk (0.4) olculdu
+  OLCULMEDI: [cakisma_K3] rotil modeli [TAHMIN] (goz O10x6, govde O5.5x12): gercek rotil olculunce yeniden olculmeli
+  OLCULMEDI: [cakisma_K5_kardan] ayni hareket grubundaki 0 yakin cift-pozda min bosluk olculmedi (yalniz kesisim)
+  OLCULMEDI: [cakisma_K5_kardan] pozlar arasi ara acilar olculmedi (yalniz verilen 18 poz)
+  OLCULMEDI: [cakisma_K5_kardan] ust kardan eklemi (ic tup ucu) alt eklemle ayni geometri -> ayri olculmedi; M3 vida-pim govdesi modellenmedi
+  OLCULMEDI: [cakisma_K5_teleskop] pozlar arasi ara acilar olculmedi (yalniz verilen 9 poz)
+  OLCULMEDI: [cakisma_K5_teleskop] teleskop radyal boslugu 0.3 esiginin ustunde (0.4/0.5/0.6) -> min bosluk yalniz nominal eksenli olculdu; 10 deg eksen kacikligi fiziksel test (kama)
+  OLCULMEDI: [cakisma_K2_pim] pozlar arasi ara acilar olculmedi (yalniz verilen 6 poz)
+  OLCULMEDI: [montaj_sokme_K1] yalniz dogrusal (tek yonlu) yol; donerek/egilerek takma, esnek parca, el/tornavida erisimi olculmedi
+  OLCULMEDI: [montaj_sokme_K1] 1.0 mm'den ince engeller adim arasinda kacabilir
+  OLCULMEDI: [montaj_sokme_K4] yalniz dogrusal (tek yonlu) yol; donerek/egilerek takma, esnek parca, el/tornavida erisimi olculmedi
+  OLCULMEDI: [montaj_sokme_K4] 1.0 mm'den ince engeller adim arasinda kacabilir
+  OLCULMEDI: [montaj_sokme_K3] yalniz dogrusal (tek yonlu) yol; donerek/egilerek takma, esnek parca, el/tornavida erisimi olculmedi
+  OLCULMEDI: [montaj_sokme_K3] 1.0 mm'den ince engeller adim arasinda kacabilir
+  OLCULMEDI: [vida_envanter] vida sikma torku / gevseme (donen eklemde somun) olculmedi
+  OLCULMEDI: [vida_envanter] M2 somun (K1/K2/K4 korna + K4 kulak: 6 adet ayni anda) envanterde TEYITSIZ (PLAN §12-4) -> satin listesinde 20 adet
+  OLCULMEDI: [vida_envanter] kit merkez vidalari (MG996R / SG90 kornasi) somunsuz, listeye alinmadi
+  OLCULMEDI: [kapsam_disi] et kalinligi (tabla.kontrol_et): calistirilmadi - kuponlarda KASITLI ince et var (K5 tup 0.8 [SPEC 2.1], K7 kabuk 1.2 [SPEC 07 §4]) ve kabartma yazi cizgileri (<1 mm) KABA isin yontemini bogar; et degerleri params'ta acik
+  OLCULMEDI: [kapsam_disi] tolerans zinciri: kuponlar zincir HALKALARINI olcmek icin (PLAN §6 Z2/Z3 girdisi); kupon icin zincir yok
+  OLCULMEDI: [kapsam_disi] giris_yolu / kablo: kuponlarda alet koridoru elle (tum vidalar acik yuzden); servo kablosu serbest
+  OLCULMEDI: [kapsam_disi] servo/korna/rotil olculeri [TAHMIN] (MG996R, kit kollar, rotil): OLCUM_FORMU 0. adim; farkliysa params + build --only
+  OLCULMEDI: [kapsam_disi] yazi okunurlugu (0.6 kabartma, 2.5-5 mm) baskida; Orca dilim onizlemesinde gozle
+
+Project Bust CP3a olcum kuponlari (K1 K2 K3 K4 K5 K7) - PLAN §8
+
+AYRINTI:
+== tek_govde: GECTI (0 bulgu)
+== havada_ada: GECTI (0 bulgu)
+== sarkma: GECTI (0 bulgu)
+== tabla: GECTI (0 bulgu)
+   . K1_kol: 147.0 x 28.0 x 6.6
+   . K1_tutucu: 165.0 x 59.0 x 92.0
+   . K2_mg_p0.1: 76.0 x 28.0 x 6.6
+   . K2_mg_p0.2: 76.0 x 28.0 x 6.6
+   . K2_mg_p0.3: 76.0 x 28.0 x 6.6
+   . K2_pim_donen_3.3: 40.0 x 12.0 x 4.6
+   . K2_pim_donen_3.4: 40.0 x 12.0 x 4.6
+   . K2_pim_sabit: 20.0 x 20.6 x 5.0
+   . K2_sg_p0.1: 66.5 x 15.0 x 5.6
+   . K2_sg_p0.2: 66.5 x 15.0 x 5.6
+   . K2_sg_p0.3: 66.5 x 15.0 x 5.6
+   . K3_kizak: 20.0 x 16.0 x 10.6
+   . K3_taban: 136.0 x 25.0 x 58.0
+   . K4_disk: 40.0 x 40.0 x 2.2
+   . K4_krank: 46.0 x 15.0 x 4.6
+   . K4_taban: 88.0 x 80.0 x 34.0
+   . K5_dis_0.4: 26.0 x 14.0 x 71.6
+   . K5_dis_0.5: 26.0 x 14.0 x 71.6
+   . K5_dis_0.6: 26.0 x 14.0 x 71.6
+   . K5_ic_0.4: 26.0 x 14.0 x 71.6
+   . K5_ic_0.5: 26.0 x 14.0 x 71.6
+   . K5_ic_0.6: 26.0 x 14.0 x 71.6
+   . K5_kama: 34.0 x 34.6 x 9.0
+   . K5_kardan_ankraj: 24.0 x 24.0 x 17.0
+   . K5_kardan_dis: 10.0 x 10.0 x 84.5
+   . K5_kardan_ic: 8.0 x 7.4 x 83.2
+   . K5_kardan_orta: 9.6 x 9.6 x 23.6
+   . K7_panel: 60.0 x 60.0 x 6.2
+== tabla_yerlesim: GECTI (0 bulgu)
+   . tabla_1.stl: x 5.0..194.6  y 5.0..189.0  z 92.0
+   . tabla_2.stl: x 5.0..215.0  y 5.0..160.0  z 84.5
+== tabla_ortusme: GECTI (0 bulgu)
+== cakisma_K1_K2mg: GECTI (0 bulgu)
+   . en dar: 0.475 mm  K1_tutucu x K2_mg_p0.1 @ K2mg0.1_phi-8.0
+   . en dar: 0.475 mm  K1_tutucu x K2_mg_p0.2 @ K2mg0.2_phi-8.0
+   . en dar: 0.475 mm  K1_tutucu x K2_mg_p0.3 @ K2mg0.3_phi-8.0
+   . en dar: 0.992 mm  K1_kol x K1_tutucu @ K1_phi-3.5
+   . en dar: 1.300 mm  K1_kol x K1_tutucu @ K1_phi+0.0
+   . K1 kolu asagi durdurucu: cikinti 110 -> -4.0 deg; K2 MG kolu cikinti 50 -> -8.5 deg (kasitli)
+== cakisma_K4_K2sg: GECTI (0 bulgu)
+   . en dar: 0.400 mm  K4_disk x K4_taban @ K4_th+0
+   . en dar: 0.400 mm  K4_disk x K4_taban @ K4_th+10
+   . en dar: 0.400 mm  K4_disk x K4_taban @ K4_th+15
+   . en dar: 0.400 mm  K4_disk x K4_taban @ K4_th+20
+   . en dar: 0.400 mm  K4_disk x K4_taban @ K4_th+25
+   . K4 disk acisi (servo -25..+25): 140.6 .. 219.3 deg -> kapak stroku 78.7 deg (oran 1.57); orta oran 1.50
+== cakisma_K3: GECTI (0 bulgu)
+   . en dar: 0.350 mm  K3_kizak x K3_taban @ K3_kizak+2
+   . en dar: 0.350 mm  K3_kizak x K3_taban @ K3_kizak-2
+   . en dar: 0.350 mm  K3_kizak x K3_taban @ K3_nom
+   . en dar: 1.300 mm  K3_taban x rod @ K3_egim15
+   . en dar: 1.300 mm  K3_taban x rod @ K3_egim30
+== cakisma_K5_kardan: GECTI (0 bulgu)
+   . en dar: 0.400 mm  K5_kardan_ic x K5_kardan_orta @ _ic_a+25_b+0
+   . en dar: 0.400 mm  K5_kardan_ic x K5_kardan_orta @ _ic_a+25_b+25
+   . en dar: 0.400 mm  K5_kardan_ic x K5_kardan_orta @ _ic_a+25_b-25
+   . en dar: 0.400 mm  K5_kardan_ic x K5_kardan_orta @ _ic_a-25_b+0
+   . en dar: 0.400 mm  K5_kardan_ic x K5_kardan_orta @ _ic_a-25_b+25
+== cakisma_K5_teleskop: GECTI (0 bulgu)
+   . en dar: 0.400 mm  K5_dis_0.4 x K5_ic_0.4 @ K5_0.4_c0.5
+   . en dar: 0.400 mm  K5_dis_0.4 x K5_ic_0.4 @ K5_0.4_c35
+   . en dar: 0.400 mm  K5_dis_0.4 x K5_ic_0.4 @ K5_0.4_c65
+   . en dar: 0.500 mm  K5_dis_0.5 x K5_ic_0.5 @ K5_0.5_c0.5
+   . en dar: 0.500 mm  K5_dis_0.5 x K5_ic_0.5 @ K5_0.5_c35
+== cakisma_K2_pim: GECTI (0 bulgu)
+== montaj_sokme_K1: GECTI (0 bulgu)
+   . adim 3: 'mg_korna+K1_kol' takma yonu (0.0, 1.0, 0.0) - 13 mm yol serbest
+   . adim 2: 'mg996r' takma yonu (0.0, -1.0, 0.0) - 52 mm yol serbest
+== montaj_sokme_K4: GECTI (0 bulgu)
+   . adim 4: 'K4_disk' takma yonu (0.0, 0.0, -1.0) - 6 mm yol serbest
+   . adim 3: 'sg_korna+K4_krank' takma yonu (0.0, 0.0, -1.0) - 8 mm yol serbest
+   . adim 2: 'sg90' takma yonu (0.0, 0.0, -1.0) - 35 mm yol serbest
+== montaj_sokme_K3: GECTI (0 bulgu)
+   . adim 3: 'rotil_A+rod+rotil_B' takma yonu (0.0, 0.0, -1.0) - 45 mm yol serbest
+   . adim 2: 'K3_kizak' takma yonu (0.0, 0.0, -1.0) - 55 mm yol serbest
+== vida_envanter: GECTI (0 bulgu)
+   . M2x8: 7 adet (envanter)
+   . M3x8: 1 adet (envanter)
+   . M3x10: 1 adet (envanter)
+   . M3x14: 11 adet (envanter)
+== kapsam_disi: GECTI (0 bulgu)

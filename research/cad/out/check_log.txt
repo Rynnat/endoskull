@@ -1,0 +1,42 @@
+parca 102
+kutle 103
+carpisma 196
+sokme 215
+tork 4
+strok 5
+kablo/devrilme 5
+montaj 15
+poz_kilit 1041
+boyun 1257
+SONUC: SORUN (36)
+KAPSAM:
+  OLCULDU:   [tek_govde] 43 parca: ayri govde sayisi (manifold decompose)
+  OLCULDU:   [havada_ada] 43 parca: 0.2 mm katmanlarla havada baslayan bilesen (>= 0.05 mm2)
+  OLCULDU:   [tabla] 43 parca: baski yonunde sinir kutusu <= 220 x 220 x 240
+  OLCULDU:   [sarkma] 43 parca (baski yonu): 0.2 mm katmanda bir alttaki kesitten > 5.0 mm uzak yeni malzeme, iki yandan <= 25.0 mm kopru degilse (alan > 1.0 mm2) = konsol
+  OLCULDU:   [et_kabuk_1.2] 6 parca: kaba et kalinligi (1500 nokta isin ornekleme, esik %1 alan < 1.15 mm)
+  OLCULDU:   [et_yapisal_1.6] 25 parca: kaba et kalinligi (1500 nokta isin ornekleme, esik %1 alan < 1.6 mm)
+  OLCULDU:   [kutle_butce] kutle merkezi 16 kalemden, sinir (5.0, None, None)
+  OLCULDU:   [kutle_butce] 16 kalem toplami <= 500 g
+  OLCULDU:   [cakisma_goz_kapak_supurme] 81 poz, 1321 parca cifti: kesisim > 0.01 mm3 ve bosluk < 0.4 mm
+  OLCULDU:   [cakisma_cene_supurme] 9 poz, 1321 parca cifti: kesisim > 0.01 mm3 ve bosluk < 0.4 mm
+  OLCULDU:   [cakisma_govde_statik] 1 poz, 523 parca cifti: kesisim > 0.01 mm3 ve bosluk < 0.4 mm
+  OLCULDU:   [rezerv_yer_tutucu_cakisma] 1 poz, 528 parca cifti: kesisim > 0.01 mm3 ve bosluk < 0.0 mm
+  OLCULDU:   [montaj_sokme_bas] 23 adim, 47 parca: dogrusal sokme yolu (1.0 mm adim, esik 0.5 mm3 / takili kesisim ustu)
+  OLCULDU:   [montaj_sokme_govde] 13 adim, 13 parca: dogrusal sokme yolu (1.0 mm adim, esik 0.5 mm3 / takili kesisim ustu)
+  OLCULDU:   [tolerans] zincir 'Z1 goz merkezleme (kure <-> B2 cukur, model)' (6 halka, en_kotu)
+  OLCULDU:   [tolerans] zincir 'Z2 kapak <-> halka (radyal, es eksen, model)' (6 halka, en_kotu)
+  OLCULDU:   [tolerans] zincir 'Z2b goz <-> halka (radyal)' (5 halka, en_kotu)
+  OLCULDU:   [tolerans] zincir 'Z6 cene kapali dis boslugu' (4 halka, en_kotu)
+  OLCULDU:   [giris_yolu] 25 vida icin alet koridoru (silindir) x o adimda takili parcalar: 644 cift
+  OLCULDU:   [kablo] 1 kablo x 27 poz: dogru parcali yol + servis halkasi <= kablo boyu
+  OLCULDU:   [vida_envanter] 17 vida: boy >= sikisan + somun + 1 dis ve boy envanter/satin listesinde
+  OLCULDU:   [plan_sapmasi] 14 izlenen PLAN kalemi (14 farkli): her fark DECISIONS'ta 'PLAN SAPMASI' etiketli bolumde
+  OLCULDU:   [tek_govde_boyun] 13 parca: ayri govde sayisi (manifold decompose)
+  OLCULDU:   [diferansiyel_tork [YAYSIZ (yay yok), nominal]] 70 poz: J = dpsi/dq sayisal (krank cos, rod acisi dahil), tau = J^-T (Q +- ek), pay >= 1.5 @ 2.5 kg*cm
+  OLCULDU:   [diferansiyel_tork [YAYSIZ (yay yok), kutle +%30]] 70 poz: J = dpsi/dq sayisal (krank cos, rod acisi dahil), tau = J^-T (Q +- ek), pay >= 1.5 @ 2.5 kg*cm
+  OLCULDU:   [yercekimi_tork_pitch [yaysiz, iki servo toplam, bilgi]] 36 parca kutle/AM, 10 aci (-25..+20): yercekimi torku + ek terimler, pay >= 1.5
+  OLCULDU:   [strok_boyun] 16 eleman x 50 poz: kinematik cozum var mi + deger izinli aralikta mi (sinir payi)
+  OLCULDU:   [kablo_boyun] 3 kablo x 27 poz: dogru parcali yol + servis halkasi <= kablo boyu
+  OLCULDU:   [devrilme] 9 poz: topla
+sure 1257

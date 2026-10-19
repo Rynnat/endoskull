@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.npz
+_tmp/
+cache/
+# lisansli / dahili: yayinlanmaz
+cad_y/
+model_makerworld/
+ref_t800/
+versions/y*/

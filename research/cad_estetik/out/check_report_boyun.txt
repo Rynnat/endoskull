@@ -1,0 +1,185 @@
+SONUC: SORUN (4)
+KAPSAM:
+  OLCULDU:   [tek_govde_boyun] 11 parca: ayri govde sayisi (manifold decompose)
+  OLCULDU:   [diferansiyel_tork [yayli %75, nominal]] 70 poz: J = dpsi/dq sayisal (krank cos, rod acisi dahil), tau = J^-T (Q +- ek), pay >= 1.5 @ 2.5 kg*cm
+  OLCULDU:   [diferansiyel_tork [yayli %75, kutle +%30]] 70 poz: J = dpsi/dq sayisal (krank cos, rod acisi dahil), tau = J^-T (Q +- ek), pay >= 1.5 @ 2.5 kg*cm
+  OLCULDU:   [diferansiyel_tork [YAYSIZ (yay kirik), nominal]] 70 poz: J = dpsi/dq sayisal (krank cos, rod acisi dahil), tau = J^-T (Q +- ek), pay >= 1.0 @ 2.5 kg*cm
+  OLCULDU:   [diferansiyel_tork [YAYSIZ (yay kirik), nominal]] YAYSIZ durum hedefi 1.0 (yalniz tutabilme; KAGIT_OLCUM 'yay sart' karari): pay < 1 -> bulgu
+  OLCULDU:   [yercekimi_tork_pitch [yaysiz, iki servo toplam, bilgi]] 37 parca kutle/AM, 10 aci (-25..+20): yercekimi torku + ek terimler, pay >= 1.5
+  OLCULDU:   [yay_ayar_sirasi] 5 delik x pitch -25..+20: yay torku / yercekimi orani; hedef aralik (0.6, 0.95)
+  OLCULDU:   [strok_boyun] 16 eleman x 50 poz: kinematik cozum var mi + deger izinli aralikta mi (sinir payi)
+  OLCULDU:   [kablo_boyun] 3 kablo x 27 poz: dogru parcali yol + servis halkasi <= kablo boyu
+  OLCULDU:   [devrilme] 9 poz: toplam AM izdusumu destek cokgeninde (>= 15.0 mm, devrilme acisi >= 15.0 deg)
+  OLCULDU:   [montaj_sokme_boyun_tezgah] 6 adim, 8 parca: dogrusal sokme yolu (1.0 mm adim, esik 0.5 mm3 / takili kesisim ustu)
+  OLCULDU:   [montaj_sokme_boyun] 16 adim, 89 parca: dogrusal sokme yolu (1.0 mm adim, esik 0.5 mm3 / takili kesisim ustu)
+  OLCULDU:   [poz_kilit] izgara 80 poz (bas_yaw 2 x bas_roll 2 x cene 2 x bas_pitch 10) + ikiye bolme (0.5 deg) = 104 poz olculdu; 1811 cift (kurallar: [('N3', 'N2', 0.3), ('N3', 'B1', 0.3), ('B4', '*', 5.0), ('*', '*', 0.4)])
+  OLCULDU:   [tork_pay_ozeti_CP3b-2] pitch/roll en kotu servo payi 3 kapasite satiri (KAGIT 1: 2.0 / 2.5 / 3.5)
+  OLCULMEDI: [diferansiyel_tork [yayli %75, nominal]] servo kapasitesi, yay sabiti, surtunme ve dinamik ek terimler GIRDI (olculmedi); servo dis boslugu ve rod esnemesi modellenmedi
+  OLCULMEDI: [diferansiyel_tork [yayli %75, kutle +%30]] servo kapasitesi, yay sabiti, surtunme ve dinamik ek terimler GIRDI (olculmedi); servo dis boslugu ve rod esnemesi modellenmedi
+  OLCULMEDI: [diferansiyel_tork [YAYSIZ (yay kirik), nominal]] servo kapasitesi, yay sabiti, surtunme ve dinamik ek terimler GIRDI (olculmedi); servo dis boslugu ve rod esnemesi modellenmedi
+  OLCULMEDI: [yercekimi_tork_pitch [yaysiz, iki servo toplam, bilgi]] GIRDI (olculmedi): dolgu orani / satin alinan parca kutleleri, servo kapasitesi (stall x kural), ek terimler (dinamik, surtunme); kapasite = 2 x 2.5 (krank cos ve diferansiyel paylasim diferansiyel_tork'ta)
+  OLCULMEDI: [yercekimi_tork_pitch [yaysiz, iki servo toplam, bilgi]] kablo cekmesi / yay etkisi, eksen kaciklik surtunmesi, servo ic disli boslugu olculmedi
+  OLCULMEDI: [yay_ayar_sirasi] yay sabiti k ve on gerilme (satin alinacak yay, K6); k x0.5..x2 sapmasi delik sirasiyla tam karsilanmaz -> makara opsiyonu (KAGIT 9)
+  OLCULMEDI: [strok_boyun] kinematik modelin kendisi (eklem boslugu, esneme, baski sapmasi) ve izgara disindaki ara pozlar olculmedi
+  OLCULMEDI: [strok_boyun] kardan pim2 (mentese) +-45 siniri geometrik tahmin; gercek sinir poz_kilit carpismasinda (orta x dil)
+  OLCULMEDI: [strok_boyun] rotil acisal siniri 25 deg [TAHMIN K3]; P1 0.4/0.6 varyant tuplerinde boy ayni, yalniz ic OD degisir
+  OLCULMEDI: [kablo_boyun] kablonun gercek guzergahi, bukulme yaricapi, surtunme/asinma ve konnektor boyu olculmedi (dogru parcali model)
+  OLCULMEDI: [kablo_boyun] kablo ile hareketli parcalar arasindaki carpisma (esnek) olculmedi; kanca/delik konumlari kablo yolu noktasi
+  OLCULMEDI: [devrilme] dinamik kuvvetler (servo ivmesi, kablo cekmesi, carpma), masa surtunmesi / kayma, ayak esnemesi olculmedi; statik
+  OLCULMEDI: [devrilme] gogus satin kalemleri (lazy susan 150 g, kartlar, hoparlor) ve adaptor kablosu cekmesi TAHMIN
+  OLCULMEDI: [montaj_sokme_boyun_tezgah] yalniz dogrusal (tek yonlu) yol; donerek/egilerek takma, esnek parca, el/tornavida erisimi olculmedi
+  OLCULMEDI: [montaj_sokme_boyun_tezgah] 1.0 mm'den ince engeller adim arasinda kacabilir
+  OLCULMEDI: [montaj_sokme_boyun_tezgah] egme servolari braket penceresinden ICERIDEN disari takilir (kulaklar ic yuzde): N2'den ONCE; vida/somun erisimi elle
+  OLCULMEDI: [montaj_sokme_boyun] siraya alinmayan 1 parca olculmedi: ['yay']
+  OLCULMEDI: [montaj_sokme_boyun] yalniz dogrusal (tek yonlu) yol; donerek/egilerek takma, esnek parca, el/tornavida erisimi olculmedi
+  OLCULMEDI: [montaj_sokme_boyun] 1.0 mm'den ince engeller adim arasinda kacabilir
+  OLCULMEDI: [montaj_sokme_boyun] yay (esnek, S-kanca) ve kablo montaj sokmeye girmedi; rod grubu once kranka (asagi + yana), bas sonra iner, ust rotil vidasi sonra; P1: ortalar dillere, sonra kisaltilmis teleskop yandan catallara (pimler sokulu degil)
+  OLCULMEDI: [poz_kilit] muaf cift B1 x P1L_orta_ust: kardan orta B1 diline M3 pimli (catal dili sarar)
+  OLCULMEDI: [poz_kilit] muaf cift B1 x P1R_orta_ust: kardan orta B1 diline M3 pimli (catal dili sarar)
+  OLCULMEDI: [poz_kilit] muaf cift B1 x rotil_ust_L: rotil gozu B1 kulagina M3 ile sikilir
+  OLCULMEDI: [poz_kilit] muaf cift B1 x rotil_ust_R: rotil gozu B1 kulagina M3 ile sikilir
+  OLCULMEDI: [poz_kilit] muaf cift B1 x yay: yay kancasi B1 kulaginda
+  OLCULMEDI: [poz_kilit] muaf cift N1 x P1L_orta_alt: kardan orta N1 diline pimli
+  OLCULMEDI: [poz_kilit] muaf cift N1 x P1R_orta_alt: kardan orta N1 diline pimli
+  OLCULMEDI: [poz_kilit] muaf cift N1 x yay: S-kanca N1 diregi deliginde (yay ekseni direk yaninda)
+  OLCULMEDI: [poz_kilit] muaf cift N2 x pim_pitch_L: M4 saplama catal deliginde
+  OLCULMEDI: [poz_kilit] muaf cift N2 x pim_pitch_R: M4 saplama catal deliginde
+  OLCULMEDI: [poz_kilit] muaf cift N3 x pim_roll_M4x40: M4 roll pimi hac deliginde
+  OLCULMEDI: [poz_kilit] muaf cift N4_L x rotil_alt_L: rotil gozu kranka M3 ile sikilir
+  OLCULMEDI: [poz_kilit] muaf cift N4_R x rotil_alt_R: rotil gozu kranka M3 ile sikilir
+  OLCULMEDI: [poz_kilit] muaf cift P1L_dis x P1L_orta_alt: orta catali tup dilini sarar
+  OLCULMEDI: [poz_kilit] muaf cift P1L_ic x P1L_orta_ust: orta ust catali tup dilini sarar (M3 pim)
+  OLCULMEDI: [poz_kilit] muaf cift P1R_dis x P1R_orta_alt: orta catali tup dilini sarar
+  OLCULMEDI: [poz_kilit] muaf cift P1R_ic x P1R_orta_ust: orta ust catali tup dilini sarar (M3 pim)
+  OLCULMEDI: [poz_kilit] muaf cift egme_mg996r_L x egme_mgkol_L: disk kol spline
+  OLCULMEDI: [poz_kilit] muaf cift egme_mg996r_R x egme_mgkol_R: disk kol spline
+  OLCULMEDI: [poz_kilit] muaf cift lazy_susan_alt x lazy_susan_ust: rulman (satin, tek parca)
+  OLCULMEDI: [poz_kilit] muaf cift lazy_susan_ust x mg996r_yaw: servo mili rulman ic deliginde
+  OLCULMEDI: [poz_kilit] kurallarla eslesmeyen ciftler bu kontrolde olculmedi (ayri cakisma kontrolleri); izgara arasi kombinasyonlar dogrusal varsayildi
+  OLCULMEDI: [poz_kilit] goz yaw/pitch ve kapak pozlari izgaraya katilmadi: goz modulu bas icinde (y > 16), boyun/gogus parcalarina erisemez; goz x kapak supurmesi check.py cakisma_goz_kapak_supurme'de
+  OLCULMEDI: [poz_kilit] bas ici ciftler (ayni 'bas' grubu: B4 x B1 vb.) burada olculmedi - cene supurmesi check.py'de
+
+Project Bust CP3b-2 boyun
+
+AYRINTI:
+== tek_govde_boyun: GECTI (0 bulgu)
+== diferansiyel_tork [yayli %75, nominal]: GECTI (0 bulgu)
+   . bas kutlesi 469 g, AM [3.8, 28.8, 8.8]; I_pitch 17.5 kg*cm2, dinamik pitch 0.150 / roll 0.104 kg*cm, surtunme 0.15; hedef 1.5
+   . EN KOTU POZ p-5_r-15: servo torklari [0.382, 0.491] kg*cm (Q [0.158, 0.572] + ek {0: 0.2996802954783149, 1: 0.10375872564954156})
+   . kapasite 2 kg*cm [2 kg*cm] -> en kotu pay 4.07 (hedef 1.5)
+   . kapasite 2.5 kg*cm [2.5 kg*cm] -> en kotu pay 5.09 (hedef 1.5)
+   . kapasite 3.5 kg*cm [3.5 kg*cm] -> en kotu pay 7.12 (hedef 1.5)
+   .    p-5_r-15: maks servo 0.491 kg*cm
+   .    p+0_r-15: maks servo 0.491 kg*cm
+   .    p+5_r-15: maks servo 0.481 kg*cm
+   .    p-10_r-15: maks servo 0.480 kg*cm
+   .    p+10_r-15: maks servo 0.465 kg*cm
+   .    p-15_r-15: maks servo 0.454 kg*cm
+== diferansiyel_tork [yayli %75, kutle +%30]: GECTI (0 bulgu)
+   . bas kutlesi 609 g, AM [3.8, 28.8, 8.8]; I_pitch 22.8 kg*cm2, dinamik pitch 0.195 / roll 0.135 kg*cm, surtunme 0.15; hedef 1.5
+   . EN KOTU POZ p-5_r-15: servo torklari [0.419, 0.655] kg*cm (Q [0.314, 0.728] + ek {0: 0.34458438412180936, 1: 0.13488634334440402})
+   . kapasite 2 kg*cm [2 kg*cm] -> en kotu pay 3.05 (hedef 1.5)
+   . kapasite 2.5 kg*cm [2.5 kg*cm] -> en kotu pay 3.82 (hedef 1.5)
+   . kapasite 3.5 kg*cm [3.5 kg*cm] -> en kotu pay 5.34 (hedef 1.5)
+   .    p-5_r-15: maks servo 0.655 kg*cm
+   .    p+0_r-15: maks servo 0.647 kg*cm
+   .    p-10_r-15: maks servo 0.646 kg*cm
+   .    p+5_r-15: maks servo 0.627 kg*cm
+   .    p-15_r-15: maks servo 0.617 kg*cm
+   .    p-10_r-10: maks servo 0.611 kg*cm
+== diferansiyel_tork [YAYSIZ (yay kirik), nominal]: GECTI (0 bulgu)
+   . bas kutlesi 469 g, AM [3.8, 28.8, 8.8]; I_pitch 17.5 kg*cm2, dinamik pitch 0.150 / roll 0.104 kg*cm, surtunme 0.15; hedef 1.0
+   . EN KOTU POZ p-10_r-15: servo torklari [0.227, 0.605] kg*cm (Q [0.626, 0.514] + ek {0: 0.2996802954783149, 1: 0.10375872564954156})
+   . kapasite 2 kg*cm [2 kg*cm] -> en kotu pay 3.30 (hedef 1.0)
+   . kapasite 2.5 kg*cm [2.5 kg*cm] -> en kotu pay 4.13 (hedef 1.0)
+   . kapasite 3.5 kg*cm [3.5 kg*cm] -> en kotu pay 5.78 (hedef 1.0)
+   .    p-10_r-15: maks servo 0.605 kg*cm
+   .    p-5_r-15: maks servo 0.601 kg*cm
+   .    p-15_r-10: maks servo 0.597 kg*cm
+   .    p-25_r+0: maks servo 0.595 kg*cm
+   .    p-20_r-5: maks servo 0.593 kg*cm
+   .    p-25_r+5: maks servo 0.593 kg*cm
+== yercekimi_tork_pitch [yaysiz, iki servo toplam, bilgi]: GECTI (0 bulgu)
+   . donen kutle 469 g, AM (notr) [3.8, 28.8, 8.8] mm, eksenden 30.1 mm
+   . T(aci) kg*cm: -25:-0.195  -20:-0.072  -15:+0.051  -10:+0.174  -5:+0.295  +0:+0.414  +5:+0.530  +10:+0.642  +15:+0.750  +20:+0.851
+   . yercekimi en kotu 0.851 kg*cm @ +20 deg; ek: dinamik 0.150, surtunme 0.150 -> gereken 1.151; kapasite 5.000 -> PAY 4.35 (hedef 1.5)
+   . EGRI pitch: yercekimi / yay / net (kg*cm, + = asagi devirir): -25: +0.95/+0.73/+0.21  -20: +0.85/+0.65/+0.20  -15: +0.75/+0.57/+0.18  -10: +0.64/+0.49/+0.16  -5: +0.53/+0.40/+0.13  +0: +0.41/+0.32/+0.10  +5: +0.30/+0.23/+0.07  +10: +0.17/+0.15/+0.03  +15: +0.05/+0.06/-0.01  +20: -0.07/-0.02/-0.05
+   . yay denge orani (nominal delik, en kucuk kareler) 0.77 (hedef 0.75); en buyuk sapma 0.033 kg*cm
+== yay_ayar_sirasi: SORUN (2 bulgu)
+   - delik t -16: yay boyu 56.9 < serbest boy 60.0 (gevsek -> model gecersiz)
+   - 5 delik ortalama oran 0.59..0.94 araligi (0.6, 0.95) hedefini kapsamiyor (k 0.02 N/mm varsayimi)
+   . delik t -16: denge orani 0.59; yay boyu -25/0/+20: 79/61/57 mm; kuvvet 0.68..1.13 N
+   . delik t -8: denge orani 0.68; yay boyu -25/0/+20: 87/69/65 mm; kuvvet 0.83..1.29 N
+   . delik t +0: denge orani 0.77; yay boyu -25/0/+20: 95/77/72 mm; kuvvet 0.99..1.44 N
+   . delik t +8: denge orani 0.85; yay boyu -25/0/+20: 103/85/80 mm; kuvvet 1.15..1.60 N
+   . delik t +16: denge orani 0.94; yay boyu -25/0/+20: 111/93/88 mm; kuvvet 1.30..1.76 N
+== strok_boyun: GECTI (0 bulgu)
+   . P1 tup: dis 68.0 / ic 66.8 mm, pim1-tup 8.0/6.7; izinli pim1-pim1 [85.7, 129.5] (alt: ic tup ucu dis tup tabanina / dis tup agzi ic koniye 3.0 mm; ust: bindirme >= 2 x OD)
+   . krank_L (r 22.8): -37.85..50.54 deg (p+20_r-15.0 / p-25_r+15.0); sinir [-60.0, 60.0] -> en kucuk pay 9.46 deg (ust, p-25_r+15.0)
+   . rotil_alt_L: 0.00..1.58 deg (p-25_r+0.0 / p-25_r-15.0); sinir [None, 25.0] -> en kucuk pay 23.42 deg (ust, p-25_r-15.0)
+   . rotil_ust_L: 0.00..16.57 deg (p-25_r+0.0 / p+0_r-15.0); sinir [None, 25.0] -> en kucuk pay 8.43 deg (ust, p+0_r-15.0)
+   . P1L tup boyu (pim1-pim1): 86.17..120.73 mm (p+20_r-15.0 / p-25_r+15.0); sinir [85.7, 129.5] -> en kucuk pay 0.47 mm (alt, p+20_r-15.0)
+   . P1L kardan ust pim1 (K5): -17.41..18.65 deg (p-20_r+15.0 / p-25_r-15.0); sinir [-25.0, 25.0] -> en kucuk pay 6.35 deg (ust, p-25_r-15.0)
+   . P1L kardan alt pim1 (K5): -3.63..3.18 deg (p+5_r-15.0 / p-25_r+15.0); sinir [-25.0, 25.0] -> en kucuk pay 21.37 deg (alt, p+5_r-15.0)
+   . P1L kardan ust pim2 (mentese): -26.81..32.18 deg (p-25_r+15.0 / p+20_r-15.0); sinir [-45.0, 45.0] -> en kucuk pay 12.82 deg (ust, p+20_r-15.0)
+   . P1L kardan alt pim2 (mentese): -3.23..7.90 deg (p-15_r+15.0 / p+20_r-15.0); sinir [-45.0, 45.0] -> en kucuk pay 37.10 deg (ust, p+20_r-15.0)
+   . krank_R (r 22.8): -37.85..50.54 deg (p+20_r+15.0 / p-25_r-15.0); sinir [-60.0, 60.0] -> en kucuk pay 9.46 deg (ust, p-25_r-15.0)
+   . rotil_alt_R: 0.00..1.58 deg (p-25_r+0.0 / p-25_r+15.0); sinir [None, 25.0] -> en kucuk pay 23.42 deg (ust, p-25_r+15.0)
+   . rotil_ust_R: 0.00..16.57 deg (p-25_r+0.0 / p+0_r+15.0); sinir [None, 25.0] -> en kucuk pay 8.43 deg (ust, p+0_r+15.0)
+   . P1R tup boyu (pim1-pim1): 86.17..120.73 mm (p+20_r+15.0 / p-25_r-15.0); sinir [85.7, 129.5] -> en kucuk pay 0.47 mm (alt, p+20_r+15.0)
+   . P1R kardan ust pim1 (K5): -18.65..17.41 deg (p-25_r+15.0 / p-20_r-15.0); sinir [-25.0, 25.0] -> en kucuk pay 6.35 deg (alt, p-25_r+15.0)
+   . P1R kardan alt pim1 (K5): -3.18..3.63 deg (p-25_r-15.0 / p+5_r+15.0); sinir [-25.0, 25.0] -> en kucuk pay 21.37 deg (ust, p+5_r+15.0)
+   . P1R kardan ust pim2 (mentese): -26.81..32.18 deg (p-25_r-15.0 / p+20_r+15.0); sinir [-45.0, 45.0] -> en kucuk pay 12.82 deg (ust, p+20_r+15.0)
+   . P1R kardan alt pim2 (mentese): -3.23..7.90 deg (p-15_r-15.0 / p+20_r+15.0); sinir [-45.0, 45.0] -> en kucuk pay 37.10 deg (ust, p+20_r+15.0)
+   . FIRMWARE ZARFI 1.5:1 deligi (r 15.2, krank <= 60): pitch:izinli roll  -25:+-2  -20:+-7.5  -15:+-13  -10:+-15  -5:+-15  +0:+-15  +5:+-15  +10:+-15  +15:+-15  +20:+-15
+== kablo_boyun: GECTI (0 bulgu)
+   . boyun 8 iletken (5V, GND, SDA, SCL, I2S SCK/WS/SD, 3V3): yol 272..323 mm (yaw0_p20_r15 / yaw70_p-25_r-15), degisim 51, + servis 60 = 383 / boy 420
+   . egme servo L kablosu (30 cm + 30 cm uzatma): yol 190..207 mm (yaw0_p-25_r-15 / yaw70_p-25_r-15), degisim 17, + servis 40 = 247 / boy 600
+   . egme servo R kablosu (30 cm + 30 cm uzatma): yol 167..184 mm (yaw0_p-25_r-15 / yaw70_p-25_r-15), degisim 17, + servis 40 = 224 / boy 600
+== devrilme: GECTI (0 bulgu)
+   . EN KOTU: yaw0_p20 -> on kenarina 84.9 mm, 28.8 deg
+   . yaw-70_p-25: kutle 1415 g, AM (-0.5, 1.9, 152.1); en yakin destek kenari (arka, normal [-0.03, 1.0]) 87.1 mm, devrilme acisi 29.8 deg
+   . yaw-70_p0: kutle 1415 g, AM (3.0, 0.6, 154.3); en yakin destek kenari (arka, normal [0.03, 1.0]) 88.3 mm, devrilme acisi 29.8 deg
+   . yaw-70_p20: kutle 1415 g, AM (6.2, -0.6, 154.7); en yakin destek kenari (arka, normal [0.03, 1.0]) 89.3 mm, devrilme acisi 30.0 deg
+   . yaw0_p-25: kutle 1415 g, AM (1.5, 1.2, 152.1); en yakin destek kenari (arka, normal [0.03, 1.0]) 87.7 mm, devrilme acisi 30.0 deg
+   . yaw0_p0: kutle 1415 g, AM (1.5, -2.5, 154.3); en yakin destek kenari (on, normal [0.03, -1.0]) 88.4 mm, devrilme acisi 29.8 deg
+   . yaw0_p20: kutle 1415 g, AM (1.5, -6.0, 154.7); en yakin destek kenari (on, normal [0.03, -1.0]) 84.9 mm, devrilme acisi 28.8 deg
+   . yaw70_p-25: kutle 1415 g, AM (1.6, -0.9, 152.1); en yakin destek kenari (arka, normal [0.03, 1.0]) 89.8 mm, devrilme acisi 30.5 deg
+   . yaw70_p0: kutle 1415 g, AM (-2.0, -2.2, 154.3); en yakin destek kenari (on, normal [-0.03, -1.0]) 88.7 mm, devrilme acisi 29.9 deg
+   . yaw70_p20: kutle 1415 g, AM (-5.2, -3.3, 154.7); en yakin destek kenari (on, normal [-0.03, -1.0]) 87.4 mm, devrilme acisi 29.5 deg
+== montaj_sokme_boyun_tezgah: GECTI (0 bulgu)
+   . adim 6: 'N2' takma yonu (0.0, -1.0, 0.0) - 127 mm yol serbest
+   . adim 5: 'egme_mgkol_R+N4_R' takma yonu (0.0, -1.0, 0.0) -> (-1.0, 0.0, 0.0) 8 mm - 84 mm yol serbest
+   . adim 4: 'egme_mgkol_L+N4_L' takma yonu (0.0, -1.0, 0.0) -> (1.0, 0.0, 0.0) 8 mm - 84 mm yol serbest
+   . adim 3: 'egme_mg996r_R' takma yonu (0.0, -1.0, 0.0) -> (-1.0, 0.0, 0.0) 59 mm - 133 mm yol serbest
+   . adim 2: 'egme_mg996r_L' takma yonu (0.0, -1.0, 0.0) -> (1.0, 0.0, 0.0) 59 mm - 133 mm yol serbest
+== montaj_sokme_boyun: SORUN (2 bulgu)
+   - adim 14: 'P1R_orta_alt' sokulemez (takma yonu (0.0, 0.0, 1.0)): tersine 4.0 mm'de P1R_orta_alt x N1 kesisim 2.8 mm3 (takili 0.0) -> bu sirayla TAKILAMAZ
+   - adim 13: 'P1L_orta_alt' sokulemez (takma yonu (0.0, 0.0, 1.0)): tersine 4.0 mm'de P1L_orta_alt x N1 kesisim 2.8 mm3 (takili 0.0) -> bu sirayla TAKILAMAZ
+   . adim 16: 'P1R_ic+P1R_dis' takma yonu (1.0, 0.0, 0.0) - 142 mm yol serbest
+   . adim 15: 'P1L_ic+P1L_dis' takma yonu (-1.0, 0.0, 0.0) - 142 mm yol serbest
+   . adim 12: 'P1R_orta_ust' takma yonu (0.0, 0.0, 1.0) - 118 mm yol serbest
+   . adim 11: 'P1L_orta_ust' takma yonu (0.0, 0.0, 1.0) - 118 mm yol serbest
+   . adim 10: 'pim_roll_M4x40' takma yonu (0.0, 0.0, 1.0) - 163 mm yol serbest
+   . adim 9: 'bas:B1+bas:B2+bas:B3L+bas:B3R+bas:B4+bas:B5a+bas:B5b_L+bas:B5b_R+bas:B5c_L+bas:B5c_R+bas:B5g_L+bas:B5g_R+bas:B5h+bas:B5d_L+bas:B5d_R+bas:B5e_L+bas:B5e_R+bas:B5i+bas:B5f_yaw+bas:B5f_pitch+bas:B5f_alt+bas:B5f_ustL+bas:B5f_ustR+bas:C1+bas:B6L+bas:B6R+bas:sg90_yaw+bas:sgkol_yaw+bas:sg90_pitch+bas:sgkol_pitch+bas:sg90_alt+bas:sgkol_alt+bas:sg90_ustL+bas:sgkol_ustL+bas:sg90_ustR+bas:sgkol_ustR+bas:mg996r_cene+bas:mgkol_cene+bas:pca2+bas:inmp441_L+bas:kopuk_L+bas:inmp441_R+bas:kopuk_R+bas:kamera_rezerv+bas:rotil_krank+bas:rotil_cene+bas:cene_rod' takma yonu (0.0, -1.0, 0.0) - 218 mm yol serbest
+   . adim 8: 'rotil_alt_R+rotil_ust_R+rod_R+N5_R' takma yonu (0.0, -1.0, 0.0) -> (-1.0, 0.0, 0.0) 6 mm - 114 mm yol serbest
+   . adim 7: 'rotil_alt_L+rotil_ust_L+rod_L+N5_L' takma yonu (0.0, -1.0, 0.0) -> (1.0, 0.0, 0.0) 6 mm - 114 mm yol serbest
+   . adim 6: 'pim_pitch_R' takma yonu (1.0, 0.0, 0.0) - 176 mm yol serbest
+   . adim 5: 'pim_pitch_L' takma yonu (-1.0, 0.0, 0.0) - 176 mm yol serbest
+   . adim 4: 'N3' takma yonu (0.0, -1.0, 0.0) - 21 mm yol serbest
+   . adim 3: 'N1+N2+egme_mg996r_L+egme_mg996r_R+egme_mgkol_L+egme_mgkol_R+N4_L+N4_R' takma yonu (0.0, -1.0, 0.0) - 133 mm yol serbest
+   . adim 2: 'Y1' takma yonu (0.0, -1.0, 0.0) - 9 mm yol serbest
+== poz_kilit: GECTI (0 bulgu)
+   . sure 109 s; bas parcalari: bas cercevesinde y_min < 16 olanlar (taban, cene, mikrofon, cene mekanizmasi)
+   . KILIT bas_yaw +0, bas_roll +0, cene +0: bas_pitch [-25.0, +20.0]  alt: -  ust: -
+   . KILIT bas_yaw +0, bas_roll +0, cene +20: bas_pitch [-11.9, +20.0]  alt: ('B4', 'N2', 0.4)  ust: -
+   . KILIT bas_yaw +0, bas_roll +15, cene +0: bas_pitch [-21.9, +20.0]  alt: ('B4', 'N2', 3.39)  ust: -
+   . KILIT bas_yaw +0, bas_roll +15, cene +20: bas_pitch [-1.9, +20.0]  alt: ('B4', 'N2', 2.32)  ust: -
+   . KILIT bas_yaw +70, bas_roll +0, cene +0: bas_pitch [-25.0, +20.0]  alt: -  ust: -
+   . KILIT bas_yaw +70, bas_roll +0, cene +20: bas_pitch [-11.9, +20.0]  alt: ('B4', 'N2', 0.4)  ust: -
+   . KILIT bas_yaw +70, bas_roll +15, cene +0: bas_pitch [-21.9, +20.0]  alt: ('B4', 'N2', 3.39)  ust: -
+   . KILIT bas_yaw +70, bas_roll +15, cene +20: bas_pitch [-1.9, +20.0]  alt: ('B4', 'N2', 2.32)  ust: -
+== tork_pay_ozeti_CP3b-2: GECTI (0 bulgu)
+   . yayli %75, nominal: 2 kg*cm -> pay 4.07  2.5 kg*cm -> pay 5.09  3.5 kg*cm -> pay 7.12
+   . yayli %75, kutle +%30: 2 kg*cm -> pay 3.05  2.5 kg*cm -> pay 3.82  3.5 kg*cm -> pay 5.34
+   . YAYSIZ (yay kirik), nominal: 2 kg*cm -> pay 3.30  2.5 kg*cm -> pay 4.13  3.5 kg*cm -> pay 5.78

@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project Bust Sim</title>
+<style>
+  :root { --bg: #07080b; --panel: rgba(14,16,22,.9); --line: #262c3a; --txt: #e6e9ef; --dim: #8b93a5; --red: #ff3b2a; --cyan: #4fd1ff; color-scheme: dark; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--txt); font: 13px/1.45 "Segoe UI", system-ui, sans-serif; overflow: hidden; }
+  canvas { display: block; width: 100%; height: 100%; }
+  #ui { position: fixed; left: 12px; top: 12px; width: 300px; max-height: calc(100% - 24px); overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; box-sizing: border-box; }
+  h1 { margin: 0; font-size: 15px; letter-spacing: .14em; color: var(--red); }
+  .sub { color: var(--dim); font-size: 11px; margin: 2px 0 8px; }
+  .grp { color: var(--dim); font-size: 10px; letter-spacing: .14em; margin: 10px 0 5px; }
+  .row { display: flex; flex-wrap: wrap; gap: 5px; }
+  button { background: #141821; color: var(--txt); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; font: inherit; font-size: 12px; cursor: pointer; }
+  button.on { border-color: var(--red); color: #ffb0a8; }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); }
+  #say { flex: 1; min-width: 0; background: #0d1016; color: var(--txt); border: 1px solid var(--line); border-radius: 6px; padding: 5px 7px; font: inherit; font-size: 12px; }
+  #read { margin-top: 10px; font: 11px/1.55 Consolas, monospace; color: var(--dim); white-space: pre; }
+  #read b { color: var(--txt); font-weight: normal; }
+  #read i { color: var(--red); font-style: normal; }
+  #camv { display: none; width: 150px; margin-top: 8px; border: 1px solid var(--line); border-radius: 6px; transform: scaleX(-1); }
+  #load { position: fixed; inset: 0; display: grid; place-items: center; color: var(--dim); font: 12px Consolas, monospace; pointer-events: none; }
+  @media (max-width: 600px) { #ui { left: 16px; right: 16px; width: auto; max-height: 48%; } }
+  #iaLog { margin-top: 6px; font: 11px/1.5 Consolas, monospace; color: var(--dim); white-space: pre-wrap; min-height: 3em; }
+  button:disabled { opacity: .45; cursor: default; }
+</style>
+<script>if (/[?&]test/.test(location.search)) { window.__errs = []; addEventListener("error", e => __errs.push(e.message)); }</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="load">CAD parçaları yükleniyor…</div>
+<div id="ui">
+  <h1>PROJECT BUST · SIM</h1>
+  <div class="sub">gerçek CAD parçaları · eklemler CAD kinematiğinden · kilitler check raporundan</div>
+  <div class="grp">KONTROL</div>
+  <div class="row"><button id="mMouse" class="on">Fareyi izle</button><button id="mAuto">Otonom</button><button id="mCam">Kamera (yüz)</button><button id="mic">Mikrofon</button></div>
+  <video id="camv" autoplay playsinline muted></video>
+  <div class="grp">İFADE</div>
+  <div class="row"><button data-ex="notr" class="on">Nötr</button><button data-ex="merak">Merak</button><button data-ex="supheli">Şüpheli</button><button data-ex="tehdit">Tehdit</button><button id="wink">Göz kırp</button><button id="talk">Konuş</button></div>
+  <div class="grp">HOPARLÖR</div>
+  <div class="row"><input id="say" value="Hedef tespit edildi. Seni izliyorum."><button id="sayBtn">Söyle</button></div>
+  <div class="grp">ETKİLEŞİM</div>
+  <div class="row"><button id="iaOn">Etkileşim</button><button id="iaTalk" class="on">Konuşma</button><button id="iaEar">Sesli komut</button></div>
+  <div id="iaLog"></div>
+  <div class="grp">GÖRÜNÜM</div>
+  <div class="row"><button id="shell">Kafatasını gizle</button><button id="torso">Gövdeyi gizle</button><button id="spin">Döndür</button><button id="fitB">Çerçevele</button><button id="qual">Kalite: oto</button></div>
+  <div id="read"></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+const DATA = /*DATA*/null;
+const D2R = Math.PI / 180, clamp = (v, a, b) => Math.max(a, Math.min(b, v)), rnd = (a, b) => a + Math.random() * (b - a);
+const mj = t => t * t * t * (10 - 15 * t + 6 * t * t);
+const $ = id => document.getElementById(id);
+
+// ================= SAHNE =================
+const canvas = $("c");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputEncoding = THREE.sRGBEncoding; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x07080b);
+const cam = new THREE.PerspectiveCamera(30, 1, 5, 8000);
+const controls = new THREE.OrbitControls(cam, canvas); controls.enableDamping = true;
+(function env() {
+  const cv = document.createElement("canvas"); cv.width = 1024; cv.height = 512; const g = cv.getContext("2d");
+  const gr = g.createLinearGradient(0, 0, 0, 512); gr.addColorStop(0, "#c9d0dc"); gr.addColorStop(.45, "#5a606c"); gr.addColorStop(.55, "#1a1c22"); gr.addColorStop(1, "#050506");
+  g.fillStyle = gr; g.fillRect(0, 0, 1024, 512);
+  const blob = (x, y, rx, ry, c) => { const r = g.createRadialGradient(x, y, 0, x, y, rx); r.addColorStop(0, c); r.addColorStop(1, "rgba(0,0,0,0)"); g.save(); g.scale(1, ry / rx); g.fillStyle = r; g.beginPath(); g.arc(x, y * rx / ry, rx, 0, 7); g.fill(); g.restore(); };
+  blob(512, 70, 180, 60, "rgba(255,255,255,1)"); blob(250, 200, 90, 70, "rgba(255,255,255,.9)"); blob(820, 220, 110, 60, "rgba(255,70,50,.9)"); blob(80, 230, 70, 50, "rgba(90,200,255,.6)");
+  const tex = new THREE.CanvasTexture(cv); tex.mapping = THREE.EquirectangularReflectionMapping; tex.encoding = THREE.sRGBEncoding;
+  scene.environment = new THREE.PMREMGenerator(renderer).fromEquirectangular(tex).texture;
+})();
+scene.add(new THREE.HemisphereLight(0xbfd0ff, 0x101012, 0.35));
+const key = new THREE.DirectionalLight(0xffffff, 1.6); key.position.set(250, 420, 380); key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048); Object.assign(key.shadow.camera, { left: -300, right: 300, top: 300, bottom: -350, near: 50, far: 1500 }); scene.add(key);
+const rim = new THREE.DirectionalLight(0xff4a3a, 0.9); rim.position.set(-350, 150, -300); scene.add(rim);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(3000, 3000), new THREE.ShadowMaterial({ opacity: .45 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+
+const MAT = {
+  metal: new THREE.MeshStandardMaterial({ color: 0xa6adb8, metalness: .88, roughness: .3 }),
+  satin: new THREE.MeshStandardMaterial({ color: 0x24272d, metalness: .3, roughness: .55 }),
+  servo: new THREE.MeshStandardMaterial({ color: 0x2f7dff, metalness: .25, roughness: .4, emissive: 0x0a2a66, emissiveIntensity: .35 }),
+  goz: new THREE.MeshStandardMaterial({ color: 0x050506, metalness: .6, roughness: .12 }),
+  iris: new THREE.MeshStandardMaterial({ color: 0xff2a14, emissive: 0xff1a08, emissiveIntensity: 2.2, roughness: .3 }),
+  kopuk: new THREE.MeshStandardMaterial({ color: 0x15161a, roughness: .95 }),
+  tel: new THREE.MeshStandardMaterial({ color: 0xd8c27a, metalness: .9, roughness: .25 }),
+  rod: new THREE.MeshStandardMaterial({ color: 0xe8ecf2, metalness: 1, roughness: .15 }),
+  yay: new THREE.MeshStandardMaterial({ color: 0x7a8494, metalness: .9, roughness: .35, transparent: true, opacity: .55 }),
+};
+const b64 = (s, T) => { const bin = atob(s), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new T(u.buffer); };
+const parts = DATA.parts.map(p => {
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(b64(p.v, Float32Array), 3));
+  geo.setIndex(new THREE.BufferAttribute(b64(p.f, Uint32Array), 1)); geo.computeVertexNormals();
+  const m = new THREE.Mesh(geo, MAT[p.c] || MAT.metal); m.matrixAutoUpdate = false; m.castShadow = m.receiveShadow = true;
+  m.userData = p; scene.add(m); return m;
+});
+const glow = []; parts.filter(m => m.userData.n.startsWith("B5c")).forEach(m => { const L = new THREE.PointLight(0xff2a14, 1.2, 140, 2); scene.add(L); glow.push([m, L]); });
+// cizgi parcalari: tel, rod, yay (uc noktali silindir) + rotil kureleri
+const unitCyl = new THREE.CylinderGeometry(1, 1, 1, 12); unitCyl.translate(0, .5, 0);
+const ball = new THREE.SphereGeometry(1, 12, 10);
+function seg(mat, r) { const m = new THREE.Mesh(unitCyl, mat); m.castShadow = true; m.userData.r = r; m.matrixAutoUpdate = false; scene.add(m); return m; }
+function knob(r) { const m = new THREE.Mesh(ball, MAT.rod); m.scale.setScalar(r); scene.add(m); return m; }
+const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _d = new THREE.Vector3(), _q = new THREE.Quaternion(), _up = new THREE.Vector3(0, 1, 0), _s = new THREE.Vector3();
+function place(m, A, B) { _d.subVectors(B, A); const L = _d.length(); _q.setFromUnitVectors(_up, _d.normalize()); _s.set(m.userData.r, L, m.userData.r); m.matrix.compose(A, _q, _s); m.matrixWorldNeedsUpdate = true; }
+const LINES = {};
+["tel_yaw", "tel_yawL", "tel_pitch", "tel_ustL", "tel_ustR", "tel_alt"].forEach(k => LINES[k] = { m: seg(MAT.tel, .55) });
+LINES.cene_rod = { m: seg(MAT.rod, 1.5), k: [knob(4), knob(4)] };
+["rod_L", "rod_R"].forEach(k => LINES[k] = { m: seg(MAT.rod, 1.5), k: [knob(4), knob(4)] });
+LINES.yay = { m: seg(MAT.yay, 4.5) };
+
+// ================= TABLOLAR (ara deger) =================
+const lerpA = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
+function idx(vals, x) { x = clamp(x, vals[0], vals[vals.length - 1]); let i = 0; while (i < vals.length - 2 && x > vals[i + 1]) i++; return [i, (x - vals[i]) / (vals[i + 1] - vals[i])]; }
+const mat4 = arr => new THREE.Matrix4().fromArray(arr);
+const vec = a => new THREE.Vector3(a[0], a[1], a[2]);
+function bil(tab, rows, cols, r, c, get) {        // 2B dogrusal ara deger (matris elemanlari / noktalar)
+  const [i, u] = idx(rows, r), [j, v] = idx(cols, c);
+  const a = get(tab[i][j]), b = get(tab[i][j + 1]), cc = get(tab[i + 1][j]), d = get(tab[i + 1][j + 1]);
+  if (!a) return null;
+  return lerpA(lerpA(a, b, v), lerpA(cc, d, v), u);
+}
+function lin(tab, vals, x, get) { const [i, u] = idx(vals, x); return lerpA(get(tab[i]), get(tab[i + 1]), u); }
+
+// ================= HAREKET MODELI (v6) =================
+const L = DATA.lim, K = DATA.kilit;
+const S = { mode: "mouse", ex: "notr", talk: false, gaze: { y: 0, p: 0 }, eyeG: { y: 0, p: 0 }, sac: null,
+  head: { y: 0, p: 0, r: 0, vy: 0, vp: 0, vr: 0 }, headT: { y: 0, p: 0 }, headDelay: 0,
+  blink: { t: -1, next: 3 }, wink: -1, jaw: 0, jawT: 0, talkNext: 0, auto: { next: 0, poi: { y: 0, p: 0 }, poiNext: 0 } };
+const EX = { notr: { lid: 0, roll: 0, pitch: 0, eyeP: 0, jaw: 0 }, merak: { lid: -.15, roll: 11, pitch: 3, eyeP: 2, jaw: 1.2 },
+  supheli: { lid: .5, roll: -4, pitch: -3, eyeP: 0, jaw: 0 }, tehdit: { lid: .38, roll: 0, pitch: -9, eyeP: 9, jaw: 0 } };
+let mouse = { x: .5, y: .5 }; addEventListener("pointermove", e => { mouse.x = e.clientX / innerWidth; mouse.y = e.clientY / innerHeight; });
+window.FT = { ok: false, x: .5, y: .5, t: -9, status: "kapalı" };
+const MIC = { on: false, stereo: false, rms: 0, floor: .01, jaw: 0, dir: 0, turnUntil: -1, lastTurn: -9, status: "kapalı", an: [], buf: null };
+const SPK = { on: false, burst: 0, next: 0 };
+function startSaccade(to) { const A = Math.hypot(to.y - S.eyeG.y, to.p - S.eyeG.p); S.sac = { from: { ...S.eyeG }, to: { ...to }, t: 0, dur: (2.2 * A + 21) / 1000 }; if (A > 25 && Math.random() < .6) triggerBlink(); S.headDelay = .03; }
+function triggerBlink() { if (S.blink.t < 0) S.blink.t = 0; }
+function blinkAmt(t) { if (t < 0) return 0; if (t < .08) return mj(t / .08); if (t < .12) return 1; if (t < .32) return 1 - mj((t - .12) / .2); return 0; }
+function spring(o, k, target, dt, w) { const v = "v" + k; o[v] += (w * w * (target - o[k]) - 2 * w * o[v]) * dt; o[k] += o[v] * dt; }
+async function startMic() {
+  try {
+    const st = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 2, echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+    const ctx = new AudioContext(), src = ctx.createMediaStreamSource(st);
+    MIC.stereo = (st.getAudioTracks()[0].getSettings().channelCount || src.channelCount) >= 2;
+    const split = ctx.createChannelSplitter(2); src.connect(split);
+    MIC.an = [0, 1].slice(0, MIC.stereo ? 2 : 1).map(i => { const a = ctx.createAnalyser(); a.fftSize = 1024; split.connect(a, i); return a; });
+    MIC.buf = new Float32Array(1024); MIC.on = true; MIC.status = MIC.stereo ? "stereo (yön var)" : "mono";
+  } catch (e) { MIC.status = "izin yok"; }
+}
+const rmsOf = a => { a.getFloatTimeDomainData(MIC.buf); let q = 0; for (const v of MIC.buf) q += v * v; return Math.sqrt(q / MIC.buf.length); };
+function readMic(time) {
+  if (!MIC.on) return;
+  const l = rmsOf(MIC.an[0]), r = MIC.stereo ? rmsOf(MIC.an[1]) : l, lvl = (l + r) / 2;
+  MIC.rms += (lvl - MIC.rms) * .5;
+  MIC.floor = lvl < MIC.floor ? MIC.floor * .9 + lvl * .1 : MIC.floor * .999 + lvl * .001;
+  MIC.jaw = clamp(Math.max(0, MIC.rms - MIC.floor * 2.5) * 9 / D2R, 0, L.cene);
+  if (!SPK.on && MIC.rms > Math.max(.02, MIC.floor * 5) && time - MIC.lastTurn > 1.2) {
+    MIC.lastTurn = time;
+    if (MIC.stereo && l > 1e-4 && r > 1e-4) { MIC.dir = clamp(20 * Math.log10(r / l) * 12, -60, 60); if (Math.abs(MIC.dir) > 8) MIC.turnUntil = time + 1.6; }
+    triggerBlink();
+  }
+}
+function speak(text) {
+  if (!("speechSynthesis" in window) || !text.trim()) return;
+  speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text);
+  const v = speechSynthesis.getVoices().find(v => /^tr/i.test(v.lang)); if (v) u.voice = v; u.lang = "tr-TR"; u.pitch = .55; u.rate = .92;
+  u.onstart = () => { SPK.on = true; SPK.t0 = performance.now(); triggerBlink(); }; u.onboundary = () => { SPK.burst = 1; }; u.onend = () => { SPK.on = false; };
+  u.onerror = e => { SPK.on = false; if (window.behLog) behLog("! ses hatası: " + (e.error || "?")); };
+  if (window.behLog && !SPK.voiceLogged) { SPK.voiceLogged = true; behLog("· ses: " + (v ? v.name : "Türkçe ses yok, varsayılan")); }
+  speechSynthesis.speak(u);
+}
+function pitchMin(roll, jaw) {      // K[roll 0|15][cene 0|20] -> egme alt siniri, iki yonlu dogrusal
+  const rr = clamp(Math.abs(roll) / 15, 0, 1), jj = clamp(jaw / 20, 0, 1);
+  return (K[0][0] * (1 - jj) + K[0][1] * jj) * (1 - rr) + (K[1][0] * (1 - jj) + K[1][1] * jj) * rr;
+}
+
+let locked = false;
+function update(dt, time) {
+  const ex = EX[S.ex];
+  readMic(time); behFrame(time);
+  const faceOk = S.mode === "cam" && FT.ok && time - FT.t < .6;
+  if (S.mode === "mouse") { S.gaze.y = (mouse.x - .5) * 110; S.gaze.p = -(mouse.y - .45) * 60; }
+  else if (time < MIC.turnUntil) { S.gaze.y = MIC.dir; S.gaze.p = 0; }
+  else if (faceOk) { S.gaze.y = ((1 - FT.x) - .5) * 70; S.gaze.p = -(FT.y - .45) * 45; }
+  else { const A = S.auto; if (time > A.poiNext) { A.poi = { y: rnd(-55, 55), p: rnd(-15, 15) }; A.poiNext = time + rnd(2.5, 6); } if (time > A.next) { S.gaze.y = A.poi.y + rnd(-6, 6); S.gaze.p = A.poi.p + rnd(-4, 4); A.next = time + rnd(.35, 1.4); } }
+  if (!S.sac && Math.hypot(S.gaze.y - S.eyeG.y, S.gaze.p - S.eyeG.p) > 1.5) startSaccade(S.gaze);
+  if (S.sac) { S.sac.t += dt; const u = Math.min(1, S.sac.t / S.sac.dur), e = mj(u); S.eyeG.y = S.sac.from.y + (S.sac.to.y - S.sac.from.y) * e; S.eyeG.p = S.sac.from.p + (S.sac.to.p - S.sac.from.p) * e; if (u >= 1) S.sac = null; }
+  else if (Math.random() < dt * 1.2) { S.eyeG.y += rnd(-.4, .4); S.eyeG.p += rnd(-.3, .3); }
+  if (S.headDelay > 0) S.headDelay -= dt;
+  else { if (Math.abs(S.gaze.y - S.headT.y) > 20) S.headT.y = S.gaze.y * .85; if (Math.abs(S.gaze.p - S.headT.p) > 14) S.headT.p = S.gaze.p * .7; }
+  // cene
+  if (SPK.on) { SPK.burst = Math.max(0, SPK.burst - dt * 4); if (time > SPK.next) { S.jawT = Math.random() < .2 ? 1 : rnd(6, 15) + 4 * SPK.burst; SPK.next = time + rnd(.11, .19); } }
+  else if (MIC.on && !S.talk) S.jawT = Math.max(ex.jaw, MIC.jaw);
+  else if (S.talk) { if (time > S.talkNext) { S.jawT = Math.random() < .25 ? 1 : rnd(5, 18); S.talkNext = time + rnd(.09, .22); } }
+  else S.jawT = ex.jaw;
+  S.jaw += (S.jawT - S.jaw) * (1 - Math.exp(-dt / .04)); S.jaw = clamp(S.jaw, 0, L.cene);
+  // bas (yay + kilit: egme-cene-yatirma, check_report_boyun poz_kilit)
+  const sway = Math.sin(time * .7) * .6 + Math.sin(time * 1.9) * .3;
+  spring(S.head, "y", clamp(S.headT.y, -70, 70) + sway, dt, 7);
+  const gs = gestOff(time);                                         // etkilesim jesti: sinirlar/kilit asagida aynen
+  spring(S.head, "r", clamp(ex.roll + sway * .6 + gs.r, -15, 15), dt, 5);
+  const pmin = pitchMin(S.head.r, S.jaw);
+  spring(S.head, "p", clamp(S.headT.p + ex.pitch + gs.p, -25, 20), dt, 6.5);
+  locked = S.head.p < pmin; if (locked) { S.head.p = pmin; S.head.vp = Math.max(0, S.head.vp); }
+  const eY = clamp(S.eyeG.y - S.head.y, -L.gozYaw, L.gozYaw), eP = clamp(S.eyeG.p - S.head.p + ex.eyeP, -L.gozPitch, L.gozPitch);
+  if (S.blink.t >= 0) { S.blink.t += dt; if (S.blink.t > .32) { S.blink.t = -1; S.blink.next = time + rnd(3, 5.5); } } else if (time > S.blink.next) triggerBlink();
+  const bl = blinkAmt(S.blink.t);
+  let wk = 0; if (S.wink >= 0) { S.wink += dt; wk = S.wink < .12 ? mj(S.wink / .12) : S.wink < .45 ? 1 : S.wink < .7 ? 1 - mj((S.wink - .45) / .25) : (S.wink = -1, 0); }
+  const base = clamp(-eP * .7 + ex.lid * 30, 0, 30);                // ust kapak bakisi izler (asagi bakinca iner)
+  const ustL = base + (L.ust - base) * bl, ustR = base + (L.ust - base) * Math.max(bl, wk);
+  const alt = clamp(eP * .35, 0, 8) + 14 * bl + ex.lid * 10;
+  return { eY, eP, ustL, ustR, alt: clamp(alt, 0, L.alt), bl, wk };
+}
+
+// ================= POZ -> PARCALAR =================
+const G = DATA.goz, U = DATA.ust, A = DATA.alt, C = DATA.cene, B = DATA.boyun;
+const Mhead = new THREE.Matrix4(), Myaw = new THREE.Matrix4(), tmp = new THREE.Matrix4();
+let hideShell = false, hideTorso = false;
+function apply(r) {
+  const h = S.head;
+  Myaw.makeRotationY(h.y * D2R);
+  Mhead.copy(Myaw).multiply(tmp.makeRotationX(-h.p * D2R)).multiply(new THREE.Matrix4().makeRotationZ(h.r * D2R));
+  const grp = { bas: null };
+  const gz = (k) => bil(G.tab, G.pitch, G.yaw, r.eP, r.eY, c => c.m[k]);
+  ["halka", "gozL", "gozR", "kol_yaw", "kol_pitch"].forEach(k => grp[k] = gz(k));
+  grp.ustL = lin(U.L, U.v, r.ustL, c => c.m.ustL); grp.kol_ustL = lin(U.L, U.v, r.ustL, c => c.m.kol_ustL);
+  grp.ustR = lin(U.R, U.v, r.ustR, c => c.m.ustR); grp.kol_ustR = lin(U.R, U.v, r.ustR, c => c.m.kol_ustR);
+  grp.alt = lin(A.tab, A.v, r.alt, c => c.m.alt); grp.kol_alt = lin(A.tab, A.v, r.alt, c => c.m.kol_alt);
+  grp.cene = lin(C.tab, C.v, S.jaw, c => c.m.cene); grp.krank = lin(C.tab, C.v, S.jaw, c => c.m.krank);
+  for (const m of parts) {
+    const p = m.userData;
+    if (p.kind === "bas") { m.matrix.copy(Mhead); if (grp[p.g]) m.matrix.multiply(mat4(grp[p.g])); m.visible = !(hideShell && /^B(2|3)/.test(p.n)); }
+    else if (p.kind === "yaw") m.matrix.copy(Myaw);
+    else if (p.kind === "boyun") { const a = bil(B.m, B.pitch, B.roll, h.p, h.r, c => c[p.n]); m.visible = !!a; if (a) m.matrix.copy(Myaw).multiply(mat4(a)); }
+    else { m.matrix.identity(); m.visible = !hideTorso; }
+    m.matrixWorldNeedsUpdate = true;
+  }
+  // cizgiler
+  const telP = (k, val) => val;
+  const gt = k => bil(G.tab, G.pitch, G.yaw, r.eP, r.eY, c => c.t[k] ? c.t[k][0].concat(c.t[k][1]) : null);
+  const setLine = (k, ab, M) => { if (!ab) return; const a = vec(ab.slice(0, 3)).applyMatrix4(M), b = vec(ab.slice(3)).applyMatrix4(M); place(LINES[k].m, a, b); if (LINES[k].k) { LINES[k].k[0].position.copy(a); LINES[k].k[1].position.copy(b); } };
+  ["tel_yaw", "tel_yawL", "tel_pitch"].forEach(k => setLine(k, gt(k), Mhead));
+  setLine("tel_ustL", lin(U.L, U.v, r.ustL, c => c.t.tel_ustL[0].concat(c.t.tel_ustL[1])), Mhead);
+  setLine("tel_ustR", lin(U.R, U.v, r.ustR, c => c.t.tel_ustR[0].concat(c.t.tel_ustR[1])), Mhead);
+  setLine("tel_alt", lin(A.tab, A.v, r.alt, c => c.t.tel_alt[0].concat(c.t.tel_alt[1])), Mhead);
+  setLine("cene_rod", lin(C.tab, C.v, S.jaw, c => c.rod[0].concat(c.rod[1])), Mhead);
+  ["rod_L", "rod_R", "yay"].forEach(k => setLine(k, bil(B.l, B.pitch, B.roll, h.p, h.r, c => c[k][0].concat(c[k][1])), Myaw));
+  glow.forEach(([m, Lt]) => { m.geometry.boundingSphere || m.geometry.computeBoundingSphere(); Lt.position.copy(m.geometry.boundingSphere.center).applyMatrix4(m.matrix); Lt.intensity = 1.2 * (1 - .8 * Math.max(r.bl, 0)); });
+}
+
+// ================= ETKILESIM (davranis katmani, v13) =================
+// Kural tabanli durum makinesi: algilama (yuz sayisi/boyutu, nesneler, sesli komut) -> cumle kuyrugu + jest.
+// Jestler yalniz ofset verir; eklem sinirlari ve cene-egme kilidi update() icinde uygulanir.
+const TR_OBJ = { "cell phone": "telefon", "cup": "bardak", "book": "kitap", "cat": "kedi", "dog": "köpek", "bottle": "şişe",
+  "laptop": "dizüstü bilgisayar", "keyboard": "klavye", "mouse": "fare", "remote": "kumanda", "scissors": "makas", "chair": "sandalye",
+  "tv": "ekran", "backpack": "sırt çantası", "handbag": "çanta", "umbrella": "şemsiye", "banana": "muz", "apple": "elma",
+  "orange": "portakal", "clock": "saat", "wine glass": "kadeh", "spoon": "kaşık", "fork": "çatal", "knife": "bıçak",
+  "teddy bear": "oyuncak ayı", "toothbrush": "diş fırçası", "potted plant": "saksı bitkisi", "bird": "kuş", "bowl": "kase",
+  "sports ball": "top", "vase": "vazo", "tie": "kravat", "couch": "kanepe", "cake": "pasta", "pizza": "pizza", "car": "araba", "bicycle": "bisiklet" };
+const SAYI = ["", "Bir insan", "İki kişi", "Üç kişi", "Dört kişi", "Beş kişi"];
+const BEH = { on: false, talk: true, ear: false, q: [], said: [], log: [], state: "kapalı", busy: 0, gest: null, idleNext: 0,
+  p: { here: false, n: 0, since: 0, last: -99, hello: -99, lost: true, near: -99, look: -99, cnt: -99 },
+  obj: { cur: [], t: -99, seen: {}, last: -99 } };
+function behLog(s) { BEH.log.unshift(s); if (BEH.log.length > 6) BEH.log.length = 6; }
+function behSay(t) { BEH.said.push(t); behLog("» " + t); if (BEH.talk && BEH.q.length < 3) BEH.q.push(t); }
+function gesture(kind, time) { BEH.gest = { kind, t0: time }; triggerBlink(); }
+function gestOff(time) {                     // {p, r} derece: egme / yatirma hedefine eklenir
+  const g = BEH.gest; if (!g) return { p: 0, r: 0 };
+  const t = time - g.t0;
+  if (g.kind === "salla") { if (t > 1.4) { BEH.gest = null; return { p: 0, r: 0 }; } return { p: -9 * Math.sin(t * 2 * Math.PI / .7) * (1 - t / 1.4), r: 0 }; }
+  if (t > 2.4) { BEH.gest = null; return { p: 0, r: 0 }; }
+  const e = Math.sin(Math.PI * t / 2.4); return { p: 3 * e, r: 12 * e };   // "egil": merakli bas yatirma
+}
+function behFaces(time, n, area) {
+  const P = BEH.p;
+  if (n > 0) {
+    if (!P.here) { const geri = P.lost; P.here = true; P.since = time; P.lost = false;   // cikip geri geldiyse yine selamla
+      if (geri || time - P.hello > 15) { behSay((SAYI[n] || "Birkaç kişi") + " görüyorum."); P.hello = P.cnt = time; } }
+    else if (n !== P.n && n >= 2 && time - P.cnt > 5) { behSay((SAYI[n] || "Birkaç kişi") + " görüyorum."); P.cnt = time; }
+    if (area > .2 && time - P.near > 10) { behSay("Biraz geri çekil."); P.near = time; }
+    if (time - P.since > 8 && time - P.look > 12) { P.look = time; gesture("egil", time); S.wink = 0; behLog("· uzun bakış: göz kırp + baş eğ"); }
+    P.n = n; P.last = time; BEH.state = n > 1 ? n + " kişi izleniyor" : "insan izleniyor";
+  } else {
+    if (P.here && time - P.last > 1.5) P.here = false;              // kisa algilama kopmalarini yut
+    if (!P.here && !P.lost && time - P.last > 2) { P.lost = true; behSay((P.n > 1 ? "Herkes" : "İnsan") + " görüntüden çıktı."); }
+    const idle = time - P.last > 30; BEH.state = idle ? "boşta (etrafa bakınıyor)" : "kimse yok";
+    if (idle && time > BEH.idleNext) { BEH.idleNext = time + rnd(15, 25); gesture("egil", time); }
+  }
+}
+function behObjects(time, list) {
+  if (!BEH.on) return;
+  const O = BEH.obj; O.cur = [...new Set(list.filter(o => o.score >= .5 && TR_OBJ[o.label]).map(o => TR_OBJ[o.label]))]; O.t = time;
+  for (const name of O.cur) {
+    if (time - (O.seen[name] ?? -99) < 45) { O.seen[name] = time; continue; }   // gorunur kaldikca tekrar soyleme
+    if (time - O.last > 4) { O.seen[name] = O.last = time; behSay("Bir " + name + " görüyorum."); }
+  }
+}
+function behHear(text, time) {
+  const s = text.toLocaleLowerCase("tr-TR"); behLog("« " + text);
+  if (/(^|\s)(sus|sessiz)/.test(s)) { BEH.talk = false; BEH.q.length = 0; if ("speechSynthesis" in window) speechSynthesis.cancel(); behLog("· konuşma kapalı"); behUI(); return "sus"; }
+  if (/konuş/.test(s)) { BEH.talk = true; behUI(); behSay("Tamam, konuşuyorum."); return "konus"; }
+  if (/merhaba|selam/.test(s)) { behSay("Merhaba. Hoş geldin."); gesture("salla", time); return "merhaba"; }
+  if (/adın ne|kimsin/.test(s)) { behSay("Ben Project Bust. Hareketli gözleri, kapakları ve çenesi olan robotik bir büstüm."); return "ad"; }
+  if (/ne görüyorsun/.test(s)) {
+    const it = []; if (BEH.p.here) it.push((SAYI[BEH.p.n] || "birkaç kişi").toLocaleLowerCase("tr-TR"));
+    if (time - BEH.obj.t < 3) it.push(...BEH.obj.cur);
+    behSay(it.length ? "Şu an " + it.join(", ") + " görüyorum." : "Şu an hiçbir şey görmüyorum."); return "gor";
+  }
+  return null;
+}
+function behFrame(time) {                     // update() her karede cagirir
+  if (BEH.on) { const f = S.mode === "cam" && FT.ok && time - FT.t < .6; behFaces(time, f ? (FT.n || 1) : 0, f ? (FT.area || 0) : 0); }
+  if (SPK.on && performance.now() - (SPK.t0 || 0) > 12000) SPK.on = false;   // onend gelmezse kilitlenme
+  if (BEH.q.length && !SPK.on && time > BEH.busy && !("speechSynthesis" in window && speechSynthesis.speaking)) { BEH.busy = time + .5; speak(BEH.q.shift()); }
+}
+// sesli komut (Web Speech API; yoksa buton kapali)
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition; let rec = null;
+function earToggle() {
+  if (!SR) return;
+  BEH.ear = !BEH.ear;
+  if (BEH.ear && !rec) {
+    rec = new SR(); rec.lang = "tr-TR"; rec.continuous = true; rec.interimResults = false;
+    rec.onresult = e => { const r = e.results[e.results.length - 1]; if (r.isFinal && !SPK.on) behHear(r[0].transcript, performance.now() / 1000); };
+    rec.onend = () => { if (BEH.ear) try { rec.start(); } catch (_) {} };
+    rec.onerror = e => { if (e.error !== "no-speech" && e.error !== "aborted") { BEH.ear = false; behLog("· sesli komut kapandı (" + e.error + ")"); behUI(); } };
+  }
+  try { BEH.ear ? rec.start() : rec.stop(); } catch (_) {}
+  behUI();
+}
+function behUI() { $("iaOn").classList.toggle("on", BEH.on); $("iaTalk").classList.toggle("on", BEH.talk); $("iaEar").classList.toggle("on", BEH.ear); }
+$("iaOn").onclick = () => { BEH.on = !BEH.on; if (BEH.on) { setMode("cam"); behLog("· etkileşim açık"); } else { BEH.q.length = 0; BEH.state = "kapalı"; } behUI(); };
+$("iaTalk").onclick = () => { BEH.talk = !BEH.talk; if (!BEH.talk) { BEH.q.length = 0; if ("speechSynthesis" in window) speechSynthesis.cancel(); } behUI(); };
+if (SR) $("iaEar").onclick = earToggle; else { $("iaEar").disabled = true; $("iaEar").textContent = "Sesli komut (yok)"; }
+setInterval(() => { $("iaLog").textContent = "durum: " + BEH.state + "\ngörülen: " + (performance.now() / 1000 - BEH.obj.t < 3 && BEH.obj.cur.length ? BEH.obj.cur.join(", ") : "—") + "\n" + BEH.log.join("\n"); }, 250);
+function behTest() {                          // ?test: sahte algilama girdisiyle durum makinesi
+  const out = [], ok = (c, m) => out.push((c ? "OK   " : "HATA ") + m), said = () => BEH.said[BEH.said.length - 1] || "";
+  BEH.on = true; BEH.talk = false; let n0;
+  behFaces(100, 1, .05); ok(said() === "Bir insan görüyorum.", "ilk yüz");
+  n0 = BEH.said.length; behFaces(101, 1, .05); ok(BEH.said.length === n0, "tekrar etmez");
+  behFaces(106, 2, .05); ok(said() === "İki kişi görüyorum.", "iki kişi");
+  behFaces(107, 2, .3); ok(said() === "Biraz geri çekil.", "çok yakın");
+  behFaces(109, 1, .05); ok(BEH.gest && BEH.gest.kind === "egil" && S.wink === 0, "uzun bakış jesti");
+  const g = gestOff(110.2); ok(Math.abs(g.r) > 1 && Math.abs(g.r) <= 15 && Math.abs(g.p) <= 25, "jest ofseti sınırda");
+  behFaces(110, 0, 0); behFaces(110.8, 0, 0); ok(said() !== "İnsan görüntüden çıktı.", "kısa kopmada susar");
+  behFaces(111.5, 0, 0); ok(said() === "İnsan görüntüden çıktı.", "çıkınca söyler");
+  n0 = BEH.said.length; behFaces(115, 0, 0); ok(BEH.said.length === n0, "bir kez söyler");
+  behFaces(116, 1, .05); ok(said() === "Bir insan görüyorum.", "geri gelince yine görür");
+  behObjects(121, [{ label: "cell phone", score: .8 }, { label: "cup", score: .3 }]); ok(said() === "Bir telefon görüyorum.", "telefon (düşük güvenli bardak yok)");
+  n0 = BEH.said.length; behObjects(122, [{ label: "cell phone", score: .8 }]); ok(BEH.said.length === n0, "nesne cooldown");
+  behObjects(126, [{ label: "cell phone", score: .8 }, { label: "book", score: .7 }]); ok(said() === "Bir kitap görüyorum.", "kitap");
+  behHear("Ne görüyorsun", 126.5); ok(/telefon/.test(said()) && /kitap/.test(said()), "ne görüyorsun");
+  behHear("Merhaba", 127); ok(BEH.gest.kind === "salla" && /Merhaba/.test(said()), "merhaba + baş salla");
+  behHear("adın ne", 128); ok(/Project Bust/.test(said()), "adın ne");
+  BEH.talk = true; behSay("x"); behHear("sus", 129); ok(!BEH.talk && !BEH.q.length, "sus");
+  behFaces(200, 0, 0); ok(/boşta/.test(BEH.state), "boşta");
+  const errs = window.__errs || [], pass = out.every(s => s.startsWith("OK")) && !errs.length;
+  const pre = document.createElement("pre"); pre.id = "testOut"; pre.textContent = out.join("\n") + "\nkonsol hataları: " + (errs.join(" | ") || "yok"); $("ui").appendChild(pre);
+  document.title = (pass ? "BEHTEST PASS " : "BEHTEST FAIL ") + out.filter(s => s.startsWith("OK")).length + "/" + out.length;
+  Object.assign(BEH, { on: false, talk: true, q: [], said: [], gest: null, state: "kapalı", p: { here: false, n: 0, since: 0, last: -99, hello: -99, lost: true, near: -99, look: -99, cnt: -99 }, obj: { cur: [], t: -99, seen: {}, last: -99 } }); BEH.log.length = 0;
+}
+
+// ================= UI =================
+function setMode(m) { S.mode = m; [["mMouse", "mouse"], ["mAuto", "auto"], ["mCam", "cam"]].forEach(([id, v]) => $(id).classList.toggle("on", m === v)); if (m === "cam" && window.startCam) window.startCam(); }
+$("mMouse").onclick = () => setMode("mouse"); $("mAuto").onclick = () => setMode("auto");
+$("mCam").onclick = () => { setMode("cam"); if (!BEH.on) { BEH.on = true; behLog("· etkileşim açık (kamera)"); behUI(); } };
+$("mic").onclick = () => { if (!MIC.on) startMic(); $("mic").classList.add("on"); };
+document.querySelectorAll("[data-ex]").forEach(b => b.onclick = () => { S.ex = b.dataset.ex; document.querySelectorAll("[data-ex]").forEach(x => x.classList.toggle("on", x === b)); });
+$("wink").onclick = () => { S.wink = 0; };
+$("talk").onclick = () => { S.talk = !S.talk; $("talk").classList.toggle("on", S.talk); };
+$("sayBtn").onclick = () => speak($("say").value); $("say").onkeydown = e => { if (e.key === "Enter") speak($("say").value); };
+$("shell").onclick = () => { hideShell = $("shell").classList.toggle("on"); };
+$("torso").onclick = () => { hideTorso = $("torso").classList.toggle("on"); };
+$("spin").onclick = () => { controls.autoRotate = $("spin").classList.toggle("on"); controls.autoRotateSpeed = .8; };
+function fit() { controls.target.set(0, 20, 0); cam.position.set(330, 120, 620); cam.updateProjectionMatrix(); }
+$("fitB").onclick = fit;
+let lowest = 0; parts.forEach(m => { m.geometry.computeBoundingBox(); lowest = Math.min(lowest, m.geometry.boundingBox.min.y); }); floor.position.y = lowest - .5;
+
+function resize() { const w = canvas.clientWidth, h = canvas.clientHeight; if (canvas.width !== Math.floor(w * renderer.getPixelRatio())) { renderer.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); } }
+let last = performance.now(), acc = 0;
+function loop(now) {
+  const dt = Math.max(0, Math.min(.05, (now - last) / 1000)); last = now;
+  const r = update(dt, now / 1000); apply(r);
+  resize(); controls.update(); renderer.render(scene, cam); qualTick(now);
+  if ((acc += dt) > .1) {
+    acc = 0; const f = v => (v >= 0 ? " " : "") + v.toFixed(1).padStart(5);
+    $("read").innerHTML =
+      `boyun  yaw <b>${f(S.head.y)}°</b>  eğme <b>${f(S.head.p)}°</b>\n       yatır <b>${f(S.head.r)}°</b>${locked ? "  <i>KİLİT (çene/yatırma)</i>" : ""}\n` +
+      `göz    yaw <b>${f(r.eY)}°</b>  pitch <b>${f(r.eP)}°</b>\n` +
+      `kapak  üst L/R <b>${r.ustL.toFixed(0).padStart(3)}/${r.ustR.toFixed(0).padStart(2)}°</b>  alt <b>${r.alt.toFixed(0).padStart(2)}°</b>\n` +
+      `çene   <b>${S.jaw.toFixed(1).padStart(5)}°</b>   sakkad <b>${S.sac ? "●" : "·"}</b>\n` +
+      `kamera <b>${S.mode === "cam" ? (FT.ok && performance.now() / 1000 - FT.t < .6 ? "yüz ✓" : FT.status) : "—"}</b>  hop <b>${SPK.on ? "konuşuyor" : "—"}</b>\nmik    <b>${MIC.status}${MIC.on ? " " + "▮".repeat(Math.min(8, Math.round(MIC.rms * 80))) : ""}</b>`;
+  }
+  requestAnimationFrame(loop);
+}
+// ================= KALITE =================
+// 2 kaliteli (yumusak golge 2048, DPR 2), 1 orta (sert golge 1024, DPR 1.25), 0 hafif (golge yok, DPR 1).
+// "oto": 2 sn'lik pencerede FPS < 30 ise bir kademe dusur (geri cikmaz, salinim olmasin).
+const QL = { q: 2, auto: true, n: 0, t0: performance.now(), fps: 0 };
+function setQual(q) {
+  QL.q = q;
+  renderer.setPixelRatio(Math.min(devicePixelRatio, [1, 1.25, 2][q]));
+  renderer.shadowMap.enabled = q > 0;
+  renderer.shadowMap.type = q === 2 ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
+  const s = q === 2 ? 2048 : 1024;
+  if (key.shadow.mapSize.x !== s) { key.shadow.mapSize.set(s, s); if (key.shadow.map) { key.shadow.map.dispose(); key.shadow.map = null; } }
+  scene.traverse(o => { if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.needsUpdate = true); });
+  qualLabel();
+}
+function qualLabel() { $("qual").textContent = "Kalite: " + (QL.auto ? "oto/" : "") + ["hafif", "orta", "kaliteli"][QL.q] + (QL.fps ? " · " + QL.fps + " fps" : "") + (QL.det ? " · yüz " + QL.det.toFixed(0) + " ms" : "") + (QL.obj ? " · nesne " + QL.obj.toFixed(0) + " ms" : ""); }
+function qualTick(now) {
+  QL.n++; if (now - QL.t0 < 2000) return;
+  QL.fps = Math.round(QL.n * 1000 / (now - QL.t0)); QL.n = 0; QL.t0 = now;
+  if (QL.auto && QL.fps < 30 && QL.q > 0 && !document.hidden) setQual(QL.q - 1); else qualLabel();
+}
+$("qual").onclick = () => {                  // oto -> kaliteli -> orta -> hafif -> oto
+  if (QL.auto) { QL.auto = false; setQual(2); } else if (QL.q > 0) setQual(QL.q - 1); else { QL.auto = true; setQual(2); }
+};
+qualLabel();
+
+fit(); $("load").remove(); requestAnimationFrame(loop);
+if (/[?&]test/.test(location.search)) behTest();
+</script>
+<script type="module">
+const V = "0.10.14"; let det = null, objDet = null, lastObj = 0, starting = false; const video = document.getElementById("camv");
+window.startCam = async () => {
+  if (det || starting) return; starting = true; FT.status = "yükleniyor…";
+  try {
+    const mp = await import(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${V}/vision_bundle.mjs`); const { FaceDetector, FilesetResolver, ObjectDetector } = mp;
+    const fs = await FilesetResolver.forVisionTasks(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${V}/wasm`);
+    const yap = (C, url, o) => C.createFromOptions(fs, { baseOptions: { modelAssetPath: url, delegate: "GPU" }, ...o })   // GPU yoksa CPU
+      .catch(() => C.createFromOptions(fs, { baseOptions: { modelAssetPath: url, delegate: "CPU" }, ...o }));
+    det = await yap(FaceDetector, "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite", { runningMode: "VIDEO", minDetectionConfidence: .5 });
+    yap(ObjectDetector, "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/float16/1/efficientdet_lite0.tflite", { runningMode: "VIDEO", scoreThreshold: .4, maxResults: 5 }).then(o => objDet = o).catch(() => {});
+    video.srcObject = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } }); video.style.display = "block"; FT.status = "yüz yok";
+    let lastTs = -1;
+    let lastFace = 0;
+    const tick = () => { if (video.readyState >= 2 && video.currentTime !== lastTs && performance.now() - lastFace > 66) { lastTs = video.currentTime; const t0 = performance.now(); lastFace = t0; const now = t0, all = det.detectForVideo(video, now).detections || [], d = all[0]; QL.det = performance.now() - t0;
+      FT.n = all.length; FT.area = d ? d.boundingBox.width * d.boundingBox.height / (video.videoWidth * video.videoHeight) : 0;
+      if (objDet && typeof BEH !== "undefined" && BEH.on && now - lastObj > 1000) { lastObj = now; const t1 = performance.now(); const o = objDet.detectForVideo(video, now).detections || []; QL.obj = performance.now() - t1; window.behObjects && behObjects(now / 1000, o.map(x => ({ label: x.categories[0].categoryName, score: x.categories[0].score }))); }
+      if (d) { const b = d.boundingBox; FT.x += ((b.originX + b.width / 2) / video.videoWidth - FT.x) * .5; FT.y += ((b.originY + b.height * .4) / video.videoHeight - FT.y) * .5; FT.ok = true; FT.t = performance.now() / 1000; } }
+      requestAnimationFrame(tick); };
+    tick();
+  } catch (e) { FT.status = "kamera hatası (tarayıcıda yerel dosyayı aç)"; det = null; }
+  starting = false;
+};
+</script>
+</body>
+</html>
