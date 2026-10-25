@@ -4,7 +4,7 @@ Kullanıcı yeni oturumda **"epic project bust"** derse: bu dosyayı oku, sonra 
 
 ## Bağlayıcılar (önce oku)
 - `KARARLAR.md` (KESİN KURAL: Project Angela hiç kullanılmaz), `PLAN.md` (§13 ses/mik/kamera eki), `KAGIT_OLCUM.md` (tasarım = sapma bandının kötü ucu), `LOOP_LOG.md` (tüm aşamalar + token), `SIPARIS.md`.
-- CAD: `cad/STATE.md` (baş/gövde), `cad/STATE_CP3b2.md` (boyun), `cad/DECISIONS.md`. Python: `PYTHONUTF8=1 C:\Users\LENOVO\epic-project\.venv-cad\Scripts\python.exe -B` (cad/ içinde).
+- CAD: `cad/STATE.md` (baş/gövde), `cad/STATE_CP3b2.md` (boyun), `cad/DECISIONS.md`. Python: `PYTHONUTF8=1 C:\Users\LENOVO\Projeler\epic-project\.venv-cad\Scripts\python.exe -B` (cad/ içinde).
 - Kullanıcı tercihleri: ürettiğini HEMEN aç (`Start-Process` / `start ""`; Artifact open tek başına açılmıyor), ara hali sakla-ma; checkpoint'te token raporu; kısa cevap.
 
 ## Durum

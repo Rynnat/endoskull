@@ -8,7 +8,7 @@ Project Angela dosyalari KULLANILMADI (KARARLAR.md KESIN KURAL).
 import os
 import sys
 
-AGENT_FLOW = r"C:\Users\LENOVO\epic-project\agent-flow"
+AGENT_FLOW = r"C:\Users\LENOVO\Projeler\epic-project\agent-flow"
 if AGENT_FLOW not in sys.path:
     sys.path.insert(0, AGENT_FLOW)
 

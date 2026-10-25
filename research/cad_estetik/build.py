@@ -1,6 +1,6 @@
 """Project Bust CP3b-1 - parca uretimi.
 
-  PYTHONUTF8=1 C:\\Users\\LENOVO\\epic-project\\.venv-cad\\Scripts\\python.exe -B build.py              # hepsi
+  PYTHONUTF8=1 C:\\Users\\LENOVO\\Projeler\\epic-project\\.venv-cad\\Scripts\\python.exe -B build.py              # hepsi
   ... build.py --only B4,C1                  # yalniz bu parcalar (digerleri out/cache'ten)
   ... build.py --liste
 Cikti: out/stl/<parca>.stl (BASKI YONU, z=0 tabla), out/cache/<parca>.npz (montaj konumu, notr) - check.py ve viewer.py okur.

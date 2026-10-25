@@ -1,7 +1,7 @@
 """Project Bust CP3a - olcum kuponlari (PLAN.md §8: K1, K2, K3, K4, K5, K7). Asil bust CAD'i DEGIL.
 
 Calistir (kuponlar/ icinde):
-  PYTHONUTF8=1 C:\\Users\\LENOVO\\epic-project\\.venv-cad\\Scripts\\python.exe -B build.py            # hepsi + tabla
+  PYTHONUTF8=1 C:\\Users\\LENOVO\\Projeler\\epic-project\\.venv-cad\\Scripts\\python.exe -B build.py            # hepsi + tabla
   ... build.py --only K4_disk,K4_krank        # yalniz bu parcalar (tabla yeniden birlestirilir)
   ... build.py --liste                        # parca adlari
 Cikti: out/stl/<parca>.stl (BASKI YONUNDE, z=0 tabla), out/tabla/tabla_<n>.stl + yerlesim.txt.

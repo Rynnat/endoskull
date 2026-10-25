@@ -41,7 +41,7 @@
 5. **tolerans Z2** (üst kapak ↔ halka, en kötü −0.28 < 0.3): UST_RI 15.0 → 15.4 ya da HALKA_GOBEK x bandı 0.4 → 0.8.
 6. **et_kabuk_1.2** (B3L/R %2.8–3.3, B5d %3.5–4.7) ve **et_yapisal_1.6** (B1 %8.5, B5a, B5g, G1): kaba ışın örnekleme. En ince noktalar kenar/kaburga uçlarında. Gerçek ince duvarlar ayıklanacak (örn. B1 0.04 @ x 40.9 = B2 kulağı somun kanalı, B5g 0.26 = pres tel deliği kenarı).
 7. **B1 kütlesi 54.6 g > 45** (dilimleyici yaklaşımı): plaka 25.7 g, alt kulaklar 16.5 g, çene servo duvarı 6.3 g, PCA plakası 6.8 g. Seçenek: PCA'yı B1 arka direklerine taşıyıp dik plakayı kaldırmak; çene duvarını kafes yapmak.
-8. Sonra: tam check TEMİZ → Orca dilimleme (`C:\Users\LENOVO\qr-stand\araclar\dilimle.py`, parça başına) → `viewer.py` → `out/model.html` → headless Edge render (en çok 2 tur).
+8. Sonra: tam check TEMİZ → Orca dilimleme (`C:\Users\LENOVO\Projeler\_arsiv\qr-stand\araclar\dilimle.py`, parça başına) → `viewer.py` → `out/model.html` → headless Edge render (en çok 2 tur).
 
 ## Hat
 `params.py` → `lib.py` → `bas.py` / `yuz_kubbe.py` / `govde.py` / `satin.py` → `kin.py` → `build.py [--only a,b]` → `check.py [--hizli]`. Tanı: `diag.py <parca>`, `carp_diag.py goz_yaw=.. alt=..`, `_tmp/ix.py A B` (iki parçanın kesişim bileşenleri), `_tmp/m.py` (B1 kütlesi), `_tmp/m2.py` (B1 kütle dökümü), `_tmp/pl.py` (B1 plaka kesiti PNG).
