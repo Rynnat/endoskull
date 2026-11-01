@@ -1,15 +1,17 @@
-# endoskull
+# Endoskull
 
-1:1 ölçekli, 3D baskı ile üretilebilir animatronik endoskeleton büstü (Epic Project altında).
-Göz takibi (kamera + MediaPipe), mekanik çene, 3 eksenli boyun (yaw / pitch / roll), ses.
+A 1:1 animatronic skull bust, designed as code (CadQuery).
 
-## İçerik
-- `research/` — araştırma notları, plan, kararlar, devam günlüğü
-  - `cad/` — CadQuery parametrik model, kontrol betikleri, STL çıktıları
-  - `cad_estetik/` — estetik turu dalı
-  - `kuponlar/` — tolerans / ölçüm test kuponları
-- `versions/v1 … v14` — her sürümün tek dosyalık interaktif 3D simülasyonu (`model.html`, tarayıcıda açılır)
+**Status:** CAD and browser simulation stage.
 
-## Not
-Hazır bir dış modelden türetilen ikinci tasarım dalı (y1, y2) ve referans fotoğraflar
-lisans nedeniyle bu repoya dahil değildir.
+Planned: camera eye tracking (MediaPipe), mechanical jaw, 3-axis neck (yaw / pitch / roll), audio.
+
+## Contents
+- `research/` — research notes, plan, decisions (Turkish)
+  - `cad/` — parametric CadQuery model, check scripts, STL output
+  - `cad_estetik/` — styling branch
+  - `kuponlar/` — tolerance / measurement test coupons
+- `versions/v1 … v14` — single-file interactive 3D simulation per version (`model.html`, opens in a browser)
+
+## Note
+A second design branch derived from an external model (y1, y2) and reference photos are not included in this repo for licensing reasons.
